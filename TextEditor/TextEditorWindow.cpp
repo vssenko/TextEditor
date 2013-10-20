@@ -11,6 +11,7 @@
 TextEditorWindow::TextEditorWindow(void)
 {
 	text = new Text();
+	controller = new UserActionController();
 	AddMessage(WM_PAINT, &TextEditorWindow::OnPaint);
 	AddMessage(WM_CHAR, &TextEditorWindow::OnCharPress);
 	AddMessage(WM_DESTROY, &TextEditorWindow::OnDestroy);
@@ -52,9 +53,7 @@ bool  TextEditorWindow::Create(
       x,y,w,h, parent, NULL, hInstance, this);
 	ShowWindow(_hwnd, SW_SHOW);
 	UpdateWindow(_hwnd);
-
 	//---
-
 	HMENU hMainMenu = CreateMenu();
 	HMENU hPopMenu = CreatePopupMenu();
 	HMENU hChangeMenu = CreatePopupMenu();
@@ -81,7 +80,7 @@ LRESULT TextEditorWindow::OnPaint(BaseWindow* wnd,LPARAM lparam,WPARAM wparam)
 	hdc = BeginPaint(wnd->_hwnd, &ps);
     int xcoord=0, //ииииикс
 		ycoord=0; ///иииигрик
-	LPRECT wndRect = new RECT();// = reinterpret_cast<TextEditorWindow*>(wnd)->windowRect;
+	LPRECT wndRect = new RECT();
 	SelectObject(hdc, NULL);
 	GetClientRect(wnd->_hwnd, wndRect);
     std::vector<ExtendedChar> extchrvector = reinterpret_cast<TextEditorWindow*>(wnd)->text->GetStringText();

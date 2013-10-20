@@ -18,11 +18,12 @@
 #include <string>
 #include <vector>
 #include <iostream>
+#include <map>
 
 // TODO: Установите здесь ссылки на дополнительные заголовки, требующиеся для программы
 #include "ExtendedChar.h"
-#include "TextEditorWindow.h"
 #include "Text.h"
 #include "BaseWindow.h"
+#include "TextEditorWindow.h"
 #include "TextEditor.h"
-#include "UserActionController.h"
+

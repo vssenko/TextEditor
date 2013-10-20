@@ -85,7 +85,6 @@
     <ClInclude Include="Text.h" />
     <ClInclude Include="TextEditor.h" />
     <ClInclude Include="TextEditorWindow.h" />
-    <ClInclude Include="UserActionController.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="BaseWindow.cpp" />
@@ -97,7 +96,6 @@
     <ClCompile Include="Text.cpp" />
     <ClCompile Include="TextEditor.cpp" />
     <ClCompile Include="TextEditorWindow.cpp" />
-    <ClCompile Include="UserActionController.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="TextEditor.rc" />

@@ -1,8 +1,5 @@
 #pragma once
 #include "stdafx.h"
-#include "basewindow.h"
-#include "Text.h"
-
 class TextEditorWindow :
 	public BaseWindow
 {
@@ -22,6 +19,7 @@ public:
 protected:	
 	Text *text;
 	LPRECT windowRect;
+	
 	//обработчики ниже
 	static LRESULT OnPaint(BaseWindow* wnd,LPARAM lparam,WPARAM wparam);
 	static LRESULT OnDestroy(BaseWindow* wnd,LPARAM lparam,WPARAM wparam);

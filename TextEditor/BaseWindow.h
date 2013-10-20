@@ -1,8 +1,5 @@
 #pragma once
 #include "stdafx.h"
-#include <map>
-#include <iostream>
-#include "TextEditor.h"
 
 class BaseWindow
 {
