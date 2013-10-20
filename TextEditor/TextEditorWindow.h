@@ -1,0 +1,35 @@
+#pragma once
+#include "stdafx.h"
+#include "basewindow.h"
+#include "Text.h"
+
+class TextEditorWindow :
+	public BaseWindow
+{
+
+public:
+
+	TextEditorWindow(void);
+	~TextEditorWindow(void);	
+	bool Create(
+	HINSTANCE hInstance,
+    HWND parent,//Родительское окно, если 0 - то главное окно
+    LPCWSTR text,//Заголовок окна
+	LPCWSTR className,
+    DWORD style, DWORD exStyle,//Стили окна
+    int x,int y,int w,int h//Размеры и положение
+    );
+protected:	
+	Text *text;
+	LPRECT windowRect;
+	//обработчики ниже
+	static LRESULT OnPaint(BaseWindow* wnd,LPARAM lparam,WPARAM wparam);
+	static LRESULT OnDestroy(BaseWindow* wnd,LPARAM lparam,WPARAM wparam);
+	static LRESULT OnCharPress(BaseWindow* wnd,LPARAM lparam,WPARAM wparam);
+	static LRESULT OnMenuCommand(BaseWindow* wnd,LPARAM lparam,WPARAM wparam);
+	static LRESULT OnSizeMove(BaseWindow* wnd,LPARAM lparam,WPARAM wparam); 
+	//обработчики выше
+	 int SaveFile();
+	 int OpenFile();
+};
+
