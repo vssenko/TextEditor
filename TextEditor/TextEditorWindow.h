@@ -19,14 +19,20 @@ public:
 protected:	
 	Text *text;
 	POINT *caretLocation;
+	int currentPositionToWrite;
 	//обработчики ниже
 	static LRESULT OnPaint(BaseWindow* wnd,LPARAM lparam,WPARAM wparam);
 	static LRESULT OnDestroy(BaseWindow* wnd,LPARAM lparam,WPARAM wparam);
 	static LRESULT OnCharPress(BaseWindow* wnd,LPARAM lparam,WPARAM wparam);
 	static LRESULT OnMenuCommand(BaseWindow* wnd,LPARAM lparam,WPARAM wparam);
 	static LRESULT OnSizeMove(BaseWindow* wnd,LPARAM lparam,WPARAM wparam); 
+	static LRESULT OnMouseDown(BaseWindow* wnd,LPARAM lparam,WPARAM wparam); 
+	static LRESULT OnMouseMove(BaseWindow* wnd,LPARAM lparam,WPARAM wparam); 
+	static LRESULT OnMouseUp(BaseWindow* wnd,LPARAM lparam,WPARAM wparam); 
 	//обработчики выше
 	 int SaveFile();
 	 int OpenFile();
+private:
+	 void CalculatePosition(int x, int y);
 };
 

@@ -11,12 +11,15 @@
 TextEditorWindow::TextEditorWindow(void)
 {
 	text = new Text();
-	controller = new UserActionController();
+	currentPositionToWrite = 0;
 	AddMessage(WM_PAINT, &TextEditorWindow::OnPaint);
 	AddMessage(WM_CHAR, &TextEditorWindow::OnCharPress);
 	AddMessage(WM_DESTROY, &TextEditorWindow::OnDestroy);
 	AddMessage(WM_COMMAND, &TextEditorWindow::OnMenuCommand);
 	AddMessage(WM_SIZE, &TextEditorWindow::OnSizeMove);
+	AddMessage(WM_LBUTTONDOWN, &TextEditorWindow::OnMouseDown);
+	AddMessage(WM_LBUTTONUP, &TextEditorWindow::OnMouseUp);
+	AddMessage(WM_MOUSEMOVE, &TextEditorWindow::OnMouseMove);
 }
 
 TextEditorWindow::~TextEditorWindow(void)
@@ -102,6 +105,7 @@ LRESULT TextEditorWindow::OnPaint(BaseWindow* wnd,LPARAM lparam,WPARAM wparam)
 		::TextOut(hdc,xcoord,ycoord,(LPCWSTR)&walker.chr,1);
 		xcoord = xcoord + elementSize.cx;
 	}
+	DestroyCaret(); ///исправить
 	CreateCaret(wnd->_hwnd,NULL,1,16);
 	SetCaretPos(xcoord,ycoord);
 	ShowCaret(wnd->_hwnd);
@@ -110,7 +114,9 @@ LRESULT TextEditorWindow::OnPaint(BaseWindow* wnd,LPARAM lparam,WPARAM wparam)
 
 LRESULT TextEditorWindow::OnCharPress(BaseWindow* wnd,LPARAM lparam,WPARAM wparam)
 {
-	reinterpret_cast<TextEditorWindow*>(wnd)->text->AddChar((TCHAR) wparam);
+	reinterpret_cast<TextEditorWindow*>(wnd)->text->AddChar((TCHAR) wparam,
+		reinterpret_cast<TextEditorWindow*>(wnd)->currentPositionToWrite);
+	reinterpret_cast<TextEditorWindow*>(wnd)->currentPositionToWrite++;
 	InvalidateRect(wnd -> _hwnd, NULL, TRUE);
 	return 0;
 }
@@ -156,10 +162,25 @@ LRESULT TextEditorWindow::OnSizeMove(BaseWindow* wnd,LPARAM lparam,WPARAM wparam
 {
 	return 0;
 }
+
+LRESULT TextEditorWindow::OnMouseDown(BaseWindow* wnd,LPARAM lparam,WPARAM wparam)
+{
+	
+	return 789;
+}
+
+LRESULT TextEditorWindow::OnMouseMove(BaseWindow* wnd,LPARAM lparam,WPARAM wparam)
+{
+	return 456;
+}
+
+LRESULT TextEditorWindow::OnMouseUp(BaseWindow* wnd,LPARAM lparam,WPARAM wparam)
+{
+	return 00;
+}
 // кончились
-
-
 int TextEditorWindow::SaveFile()
 {
 	return 1488;
 }
+
