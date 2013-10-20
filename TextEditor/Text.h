@@ -11,8 +11,8 @@ public:
 	std::vector<ExtendedChar> GetStringText(void);
 	std::vector<BITMAP> GetBitmapArray(void);
 	int Text::GetTextLength(void);
-	void AddBitmap(BITMAP bitmap);
-	void AddChar(TCHAR chr);
+	void AddBitmap(BITMAP bitmap, int pos);
+	void AddChar(TCHAR chr, int pos);
 private:
 	//std::wstring* data;
 	std::vector<ExtendedChar> data;

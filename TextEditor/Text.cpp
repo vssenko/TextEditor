@@ -25,15 +25,14 @@ std::vector<BITMAP> Text::GetBitmapArray()
 	return images;
 }
 
-void Text:: AddBitmap(BITMAP bitmap)
+void Text:: AddBitmap(BITMAP bitmap, int pos)
 {
 	images.push_back(bitmap);
 }
 
-void Text::AddChar(TCHAR chr)
+void Text::AddChar(TCHAR chr, int pos)
 {
 	ExtendedChar* newChar = new ExtendedChar();
 	newChar->chr = chr;
-	data.push_back(*newChar);
-
+	data.insert(data.begin() + pos, *newChar);
 }

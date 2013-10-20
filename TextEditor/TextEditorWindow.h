@@ -18,8 +18,7 @@ public:
     );
 protected:	
 	Text *text;
-	LPRECT windowRect;
-	
+	POINT *caretLocation;
 	//обработчики ниже
 	static LRESULT OnPaint(BaseWindow* wnd,LPARAM lparam,WPARAM wparam);
 	static LRESULT OnDestroy(BaseWindow* wnd,LPARAM lparam,WPARAM wparam);

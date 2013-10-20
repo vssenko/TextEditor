@@ -154,7 +154,6 @@ LRESULT TextEditorWindow::OnMenuCommand(BaseWindow* wnd,LPARAM lparam,WPARAM wpa
 
 LRESULT TextEditorWindow::OnSizeMove(BaseWindow* wnd,LPARAM lparam,WPARAM wparam)
 {
-	//GetWindowRect(wnd->_hwnd, reinterpret_cast<TextEditorWindow*>(wnd)->windowRect);
 	return 0;
 }
 // кончились
