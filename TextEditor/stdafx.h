@@ -19,7 +19,7 @@
 #include <vector>
 #include <iostream>
 #include <map>
-
+#include <Windowsx.h>
 // TODO: Установите здесь ссылки на дополнительные заголовки, требующиеся для программы
 #include "ExtendedChar.h"
 #include "Text.h"

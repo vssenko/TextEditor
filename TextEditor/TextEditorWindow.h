@@ -20,6 +20,8 @@ protected:
 	Text *text;
 	POINT *caretLocation;
 	int currentPositionToWrite;
+	int mouseDownPosition;
+	int mouseUpPosition;
 	//обработчики ниже
 	static LRESULT OnPaint(BaseWindow* wnd,LPARAM lparam,WPARAM wparam);
 	static LRESULT OnDestroy(BaseWindow* wnd,LPARAM lparam,WPARAM wparam);

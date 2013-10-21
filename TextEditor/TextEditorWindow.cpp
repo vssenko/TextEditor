@@ -12,6 +12,7 @@ TextEditorWindow::TextEditorWindow(void)
 {
 	text = new Text();
 	currentPositionToWrite = 0;
+	caretLocation = NULL;
 	AddMessage(WM_PAINT, &TextEditorWindow::OnPaint);
 	AddMessage(WM_CHAR, &TextEditorWindow::OnCharPress);
 	AddMessage(WM_DESTROY, &TextEditorWindow::OnDestroy);
@@ -107,7 +108,8 @@ LRESULT TextEditorWindow::OnPaint(BaseWindow* wnd,LPARAM lparam,WPARAM wparam)
 	}
 	DestroyCaret(); ///исправить
 	CreateCaret(wnd->_hwnd,NULL,1,16);
-	SetCaretPos(xcoord,ycoord);
+	if (reinterpret_cast<TextEditorWindow*>(wnd)->caretLocation != NULL)
+		SetCaretPos(reinterpret_cast<TextEditorWindow*>(wnd)->caretLocation->x,reinterpret_cast<TextEditorWindow*>(wnd)->caretLocation->y);
 	ShowCaret(wnd->_hwnd);
 		return 0;
 }
@@ -165,8 +167,48 @@ LRESULT TextEditorWindow::OnSizeMove(BaseWindow* wnd,LPARAM lparam,WPARAM wparam
 
 LRESULT TextEditorWindow::OnMouseDown(BaseWindow* wnd,LPARAM lparam,WPARAM wparam)
 {
-	
-	return 789;
+	POINT pt;
+	GetCursorPos (&pt);
+    ScreenToClient (wnd->_hwnd, &pt);
+	PAINTSTRUCT ps;
+	HDC hdc;
+	hdc = BeginPaint(wnd->_hwnd, &ps);
+	int xcoord =0 , ycoord = 0;
+	LPRECT wndRect = new RECT();
+	GetClientRect(wnd->_hwnd, wndRect);
+    std::vector<ExtendedChar> extchrvector = reinterpret_cast<TextEditorWindow*>(wnd)->text->GetStringText();
+	ExtendedChar walker;
+	HFONT currentFont;
+	SIZE elementSize;
+	for(int i = 0; i < extchrvector.size();i++)
+	{
+		walker = extchrvector[i];
+		if (walker.ifImageThenImageIndex != -1)
+		{
+			continue;
+		}
+		GetTextExtentPoint32(hdc,(LPCWSTR)&walker.chr,1, &elementSize);
+		if ((pt.x - xcoord < elementSize.cx) && (pt.y - ycoord < elementSize.cy))
+		{
+			reinterpret_cast<TextEditorWindow*>(wnd)->currentPositionToWrite = i+1;
+			if (reinterpret_cast<TextEditorWindow*>(wnd)->caretLocation != NULL)
+				delete reinterpret_cast<TextEditorWindow*>(wnd)->caretLocation;
+			POINT *vasya = new POINT();
+			vasya->x = xcoord;
+			vasya->y = ycoord;
+			reinterpret_cast<TextEditorWindow*>(wnd)->caretLocation = vasya;
+			InvalidateRect(wnd->_hwnd, NULL,TRUE);
+			return 1;
+		}
+		if ( (xcoord + elementSize.cx) > wndRect->right - wndRect->left)
+		{
+			xcoord = 0;
+			ycoord = ycoord + elementSize.cy;	
+		}
+		else
+			xcoord+=elementSize.cx;
+	}
+	return 0;
 }
 
 LRESULT TextEditorWindow::OnMouseMove(BaseWindow* wnd,LPARAM lparam,WPARAM wparam)
