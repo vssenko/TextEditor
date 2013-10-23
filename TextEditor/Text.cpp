@@ -36,3 +36,11 @@ void Text::AddChar(TCHAR chr, int pos)
 	newChar->chr = chr;
 	data.insert(data.begin() + pos, *newChar);
 }
+void Text::DeleteSymbol(int pos)
+{
+	data.erase(data.begin() + pos);
+}
+void Text::DeleteSymbol(int pos1,int pos2)
+{
+	data.erase(data.begin() + pos1,data.begin() + pos2);
+}

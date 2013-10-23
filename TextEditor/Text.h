@@ -12,6 +12,8 @@ public:
 	std::vector<BITMAP> GetBitmapArray(void);
 	int Text::GetTextLength(void);
 	void AddBitmap(BITMAP bitmap, int pos);
+	void DeleteSymbol(int pos);
+	void DeleteSymbol(int pos1, int pos2);
 	void AddChar(TCHAR chr, int pos);
 private:
 	//std::wstring* data;

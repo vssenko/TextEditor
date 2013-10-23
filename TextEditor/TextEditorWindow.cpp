@@ -12,7 +12,6 @@ TextEditorWindow::TextEditorWindow(void)
 {
 	text = new Text();
 	currentPositionToWrite = 0;
-	caretLocation = NULL;
 	AddMessage(WM_PAINT, &TextEditorWindow::OnPaint);
 	AddMessage(WM_CHAR, &TextEditorWindow::OnCharPress);
 	AddMessage(WM_DESTROY, &TextEditorWindow::OnDestroy);
@@ -89,10 +88,27 @@ LRESULT TextEditorWindow::OnPaint(BaseWindow* wnd,LPARAM lparam,WPARAM wparam)
 	GetClientRect(wnd->_hwnd, wndRect);
     std::vector<ExtendedChar> extchrvector = reinterpret_cast<TextEditorWindow*>(wnd)->text->GetStringText();
 	ExtendedChar walker;
+	bool isSelected = reinterpret_cast<TextEditorWindow*>(wnd)->mouseDownPosition != reinterpret_cast<TextEditorWindow*>(wnd)->mouseUpPosition;
 	HFONT currentFont;
 	SIZE elementSize;
-	for(auto walker : extchrvector)
+	for(int i= 0; i< extchrvector.size();i++)
 	{
+		if (i == reinterpret_cast<TextEditorWindow*>(wnd)->currentPositionToWrite)
+		{
+			DestroyCaret();
+			CreateCaret(wnd->_hwnd,NULL,1,16);
+			SetCaretPos(xcoord,ycoord);
+			ShowCaret(wnd->_hwnd);
+		}
+		if (isSelected && i == reinterpret_cast<TextEditorWindow*>(wnd)->mouseDownPosition)
+		{
+			SetBkColor(hdc, RGB(0,0,255));
+		}
+		if (isSelected && i == reinterpret_cast<TextEditorWindow*>(wnd)->mouseUpPosition)
+		{
+			SetBkColor(hdc, RGB(255,255,255));
+		}
+		walker = extchrvector[i];
 		if (walker.ifImageThenImageIndex != -1)
 		{
 			continue;
@@ -106,16 +122,21 @@ LRESULT TextEditorWindow::OnPaint(BaseWindow* wnd,LPARAM lparam,WPARAM wparam)
 		::TextOut(hdc,xcoord,ycoord,(LPCWSTR)&walker.chr,1);
 		xcoord = xcoord + elementSize.cx;
 	}
-	DestroyCaret(); ///исправить
-	CreateCaret(wnd->_hwnd,NULL,1,16);
-	if (reinterpret_cast<TextEditorWindow*>(wnd)->caretLocation != NULL)
-		SetCaretPos(reinterpret_cast<TextEditorWindow*>(wnd)->caretLocation->x,reinterpret_cast<TextEditorWindow*>(wnd)->caretLocation->y);
-	ShowCaret(wnd->_hwnd);
-		return 0;
+	EndPaint(wnd->_hwnd, &ps);
+	return 0;
 }
 
 LRESULT TextEditorWindow::OnCharPress(BaseWindow* wnd,LPARAM lparam,WPARAM wparam)
 {
+	if (reinterpret_cast<TextEditorWindow*>(wnd)->mouseDownPosition !=
+		reinterpret_cast<TextEditorWindow*>(wnd)->mouseUpPosition)
+	{
+		reinterpret_cast<TextEditorWindow*>(wnd)->text->DeleteSymbol(
+		reinterpret_cast<TextEditorWindow*>(wnd)->mouseDownPosition,
+		reinterpret_cast<TextEditorWindow*>(wnd)->mouseUpPosition);
+		reinterpret_cast<TextEditorWindow*>(wnd)->mouseUpPosition = reinterpret_cast<TextEditorWindow*>(wnd)->mouseDownPosition;
+		reinterpret_cast<TextEditorWindow*>(wnd)->currentPositionToWrite = reinterpret_cast<TextEditorWindow*>(wnd)->mouseDownPosition;
+	}
 	reinterpret_cast<TextEditorWindow*>(wnd)->text->AddChar((TCHAR) wparam,
 		reinterpret_cast<TextEditorWindow*>(wnd)->currentPositionToWrite);
 	reinterpret_cast<TextEditorWindow*>(wnd)->currentPositionToWrite++;
@@ -167,48 +188,8 @@ LRESULT TextEditorWindow::OnSizeMove(BaseWindow* wnd,LPARAM lparam,WPARAM wparam
 
 LRESULT TextEditorWindow::OnMouseDown(BaseWindow* wnd,LPARAM lparam,WPARAM wparam)
 {
-	POINT pt;
-	GetCursorPos (&pt);
-    ScreenToClient (wnd->_hwnd, &pt);
-	PAINTSTRUCT ps;
-	HDC hdc;
-	hdc = BeginPaint(wnd->_hwnd, &ps);
-	int xcoord =0 , ycoord = 0;
-	LPRECT wndRect = new RECT();
-	GetClientRect(wnd->_hwnd, wndRect);
-    std::vector<ExtendedChar> extchrvector = reinterpret_cast<TextEditorWindow*>(wnd)->text->GetStringText();
-	ExtendedChar walker;
-	HFONT currentFont;
-	SIZE elementSize;
-	for(int i = 0; i < extchrvector.size();i++)
-	{
-		walker = extchrvector[i];
-		if (walker.ifImageThenImageIndex != -1)
-		{
-			continue;
-		}
-		GetTextExtentPoint32(hdc,(LPCWSTR)&walker.chr,1, &elementSize);
-		if ((pt.x - xcoord < elementSize.cx) && (pt.y - ycoord < elementSize.cy))
-		{
-			reinterpret_cast<TextEditorWindow*>(wnd)->currentPositionToWrite = i+1;
-			if (reinterpret_cast<TextEditorWindow*>(wnd)->caretLocation != NULL)
-				delete reinterpret_cast<TextEditorWindow*>(wnd)->caretLocation;
-			POINT *vasya = new POINT();
-			vasya->x = xcoord;
-			vasya->y = ycoord;
-			reinterpret_cast<TextEditorWindow*>(wnd)->caretLocation = vasya;
-			InvalidateRect(wnd->_hwnd, NULL,TRUE);
-			return 1;
-		}
-		if ( (xcoord + elementSize.cx) > wndRect->right - wndRect->left)
-		{
-			xcoord = 0;
-			ycoord = ycoord + elementSize.cy;	
-		}
-		else
-			xcoord+=elementSize.cx;
-	}
-	return 0;
+	reinterpret_cast<TextEditorWindow*>(wnd)->mouseDownPosition = reinterpret_cast<TextEditorWindow*>(wnd)->CalculatePosition(LOWORD(lparam),HIWORD(lparam));
+	return 00000;
 }
 
 LRESULT TextEditorWindow::OnMouseMove(BaseWindow* wnd,LPARAM lparam,WPARAM wparam)
@@ -218,9 +199,62 @@ LRESULT TextEditorWindow::OnMouseMove(BaseWindow* wnd,LPARAM lparam,WPARAM wpara
 
 LRESULT TextEditorWindow::OnMouseUp(BaseWindow* wnd,LPARAM lparam,WPARAM wparam)
 {
+	reinterpret_cast<TextEditorWindow*>(wnd)->mouseUpPosition = reinterpret_cast<TextEditorWindow*>(wnd)->CalculatePosition(LOWORD(lparam),HIWORD(lparam));
+	reinterpret_cast<TextEditorWindow*>(wnd)->currentPositionToWrite = reinterpret_cast<TextEditorWindow*>(wnd)->mouseUpPosition;
+	if (reinterpret_cast<TextEditorWindow*>(wnd)->mouseDownPosition > reinterpret_cast<TextEditorWindow*>(wnd)->mouseUpPosition)
+	{
+		int temp = reinterpret_cast<TextEditorWindow*>(wnd)->mouseDownPosition;
+		reinterpret_cast<TextEditorWindow*>(wnd)->mouseDownPosition = reinterpret_cast<TextEditorWindow*>(wnd)->mouseUpPosition;
+		reinterpret_cast<TextEditorWindow*>(wnd)->mouseUpPosition = temp;
+	}
+	InvalidateRect(wnd->_hwnd,NULL,TRUE);
 	return 00;
 }
+
 // кончились
+
+
+int TextEditorWindow::CalculatePosition(int x, int y)
+{
+	POINT pt = POINT();
+	pt.x = x;
+	pt.y = y;
+	PAINTSTRUCT ps;
+	HDC hdc;
+	hdc = BeginPaint(_hwnd, &ps);
+	int xcoord =0 , ycoord = 0;
+	LPRECT wndRect = new RECT();
+	GetClientRect(_hwnd, wndRect);
+    std::vector<ExtendedChar> extchrvector = text->GetStringText();
+	ExtendedChar walker;
+	HFONT currentFont;
+	SIZE elementSize;
+	int i = 0;
+	for(i ; i < extchrvector.size();i++)
+	{
+		walker = extchrvector[i];
+		if (walker.ifImageThenImageIndex != -1)
+		{
+			continue;
+		}
+		GetTextExtentPoint32(hdc,(LPCWSTR)&walker.chr,1, &elementSize);
+		if ((pt.x - xcoord < elementSize.cx) && (pt.y - ycoord < elementSize.cy))
+		{
+			//free(&pt);
+			return i;
+		}
+		if ( (xcoord + elementSize.cx) > wndRect->right - wndRect->left)
+		{
+			xcoord = 0;
+			ycoord = ycoord + elementSize.cy;	
+		}
+		else
+			xcoord+=elementSize.cx;
+	}
+	//free(&pt);
+	return i;
+}
+
 int TextEditorWindow::SaveFile()
 {
 	return 1488;

@@ -18,7 +18,6 @@ public:
     );
 protected:	
 	Text *text;
-	POINT *caretLocation;
 	int currentPositionToWrite;
 	int mouseDownPosition;
 	int mouseUpPosition;
@@ -35,6 +34,6 @@ protected:
 	 int SaveFile();
 	 int OpenFile();
 private:
-	 void CalculatePosition(int x, int y);
+	  int CalculatePosition(int x, int y);
 };
 
