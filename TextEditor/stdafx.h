@@ -11,6 +11,7 @@
 // Файлы заголовков Windows:
 #include <windows.h>
 // Файлы заголовков C RunTime
+#include <Commdlg.h>
 #include <stdlib.h>
 #include <malloc.h>
 #include <memory.h>
@@ -26,4 +27,5 @@
 #include "BaseWindow.h"
 #include "TextEditorWindow.h"
 #include "TextEditor.h"
+#include "Filemanager.h"
 

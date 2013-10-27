@@ -7,7 +7,7 @@
 #define ID_EXIT 3
 #define ID_ABOUT 4
 #define ID_CHANGE 5
-
+#define ID_IMAGE 6
 TextEditorWindow::TextEditorWindow(void)
 {
 	text = new Text();
@@ -69,6 +69,7 @@ bool  TextEditorWindow::Create(
 	AppendMenu(hPopMenu, MF_SEPARATOR, 0, NULL);
 	AppendMenu(hPopMenu, MF_STRING, ID_EXIT, L"Выход");
 	AppendMenu(hChangeMenu,MF_STRING, ID_CHANGE, L"Шрифт");
+	AppendMenu(hChangeMenu, MF_STRING, ID_IMAGE, L"Загрузить картинку");
 	SetMenu(_hwnd, hMainMenu);
 	InvalidateRect(_hwnd,NULL,TRUE);
 	if(!_hwnd) return false;
@@ -212,7 +213,13 @@ LRESULT TextEditorWindow::OnMouseUp(BaseWindow* wnd,LPARAM lparam,WPARAM wparam)
 }
 
 // кончились
+int TextEditorWindow::LoadMyImage()
+{
+	Filemanager manager;
+	HBITMAP bitmp = manager.LoadMyImage();
+	text->AddBitmap(bitmp, currentPositionToWrite);
 
+}
 
 int TextEditorWindow::CalculatePosition(int x, int y)
 {
@@ -260,3 +267,26 @@ int TextEditorWindow::SaveFile()
 	return 1488;
 }
 
+int TextEditorWindow::DrawBitmap(HDC hdc,HBITMAP hBitmap, int xStart, int yStart) 
+{ 
+	 BITMAP bm; 
+	 HDC hdcMem; 
+	 DWORD dwSize; 
+	 POINT ptSize, ptOrg; 
+	 hdcMem = CreateCompatibleDC(hdc); 
+	 SelectObject(hdcMem, hBitmap); 
+	 SetMapMode(hdcMem, GetMapMode(hdc)); 
+	 GetObject(hBitmap, sizeof(BITMAP),(LPVOID) &bm); 
+	 ptSize.x = bm.bmWidth; 
+	 ptSize.y = bm.bmHeight; 
+	 DPtoLP(hdc, &ptSize, 1); 
+	 ptOrg.x = 0; 
+	 ptOrg.y = 0; 
+	 DPtoLP(hdcMem, &ptOrg, 1); 
+	 BitBlt( 
+	hdc, xStart, yStart, ptSize.x, ptSize.y, 
+	hdcMem, ptOrg.x, ptOrg.y, SRCCOPY 
+	); 
+	 DeleteDC(hdcMem); 
+
+}

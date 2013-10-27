@@ -9,15 +9,15 @@ public:
 	~Text(void);
 
 	std::vector<ExtendedChar> GetStringText(void);
-	std::vector<BITMAP> GetBitmapArray(void);
+	std::vector<HBITMAP> GetBitmapArray(void);
 	int Text::GetTextLength(void);
-	void AddBitmap(BITMAP bitmap, int pos);
-	void DeleteSymbol(int pos);
-	void DeleteSymbol(int pos1, int pos2);
-	void AddChar(TCHAR chr, int pos);
+	int AddBitmap(HBITMAP bitmap, int pos);
+	int DeleteSymbol(int pos);
+	int DeleteSymbol(int pos1, int pos2);
+	int AddChar(TCHAR chr, int pos);
 private:
 	//std::wstring* data;
 	std::vector<ExtendedChar> data;
-	std::vector<BITMAP> images;
+	std::vector<HBITMAP> images;
 };
 

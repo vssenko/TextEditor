@@ -20,27 +20,34 @@ int Text::GetTextLength(void)
 	return (int)data.size();
 }
 
-std::vector<BITMAP> Text::GetBitmapArray()
+std::vector<HBITMAP> Text::GetBitmapArray()
 {
 	return images;
 }
 
-void Text:: AddBitmap(BITMAP bitmap, int pos)
+int Text:: AddBitmap(HBITMAP bitmap, int pos)
 {
 	images.push_back(bitmap);
+	ExtendedChar *bitmpchar = new ExtendedChar();
+	bitmpchar->ifImageThenImageIndex = images.size - 1; // последний индекс
+	this->data.insert(data.begin() + pos, *bitmpchar);
+	return 1;
 }
 
-void Text::AddChar(TCHAR chr, int pos)
+int Text::AddChar(TCHAR chr, int pos)
 {
 	ExtendedChar* newChar = new ExtendedChar();
 	newChar->chr = chr;
 	data.insert(data.begin() + pos, *newChar);
+	return 1;
 }
-void Text::DeleteSymbol(int pos)
+int Text::DeleteSymbol(int pos)
 {
 	data.erase(data.begin() + pos);
+	return 1;
 }
-void Text::DeleteSymbol(int pos1,int pos2)
+int Text::DeleteSymbol(int pos1,int pos2)
 {
 	data.erase(data.begin() + pos1,data.begin() + pos2);
+	return 1;
 }

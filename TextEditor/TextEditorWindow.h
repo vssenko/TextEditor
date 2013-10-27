@@ -31,8 +31,10 @@ protected:
 	static LRESULT OnMouseMove(BaseWindow* wnd,LPARAM lparam,WPARAM wparam); 
 	static LRESULT OnMouseUp(BaseWindow* wnd,LPARAM lparam,WPARAM wparam); 
 	//обработчики выше
-	 int SaveFile();
-	 int OpenFile();
+	int TextEditorWindow::DrawBitmap(HDC hdc, HBITMAP hBitmap, int xStart, int yStart);
+	int LoadMyImage();
+	int SaveFile();
+	int OpenFile();
 private:
 	  int CalculatePosition(int x, int y);
 };
