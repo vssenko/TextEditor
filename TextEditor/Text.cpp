@@ -27,6 +27,8 @@ std::vector<HBITMAP> Text::GetBitmapArray()
 
 int Text:: AddBitmap(HBITMAP bitmap, int pos)
 {
+	if (bitmap ==NULL)
+		return 0;
 	images.push_back(bitmap);
 	ExtendedChar *bitmpchar = new ExtendedChar();
 	bitmpchar->ifImageThenImageIndex = images.size() - 1; // последний индекс

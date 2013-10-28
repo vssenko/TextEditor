@@ -12,7 +12,15 @@ Filemanager::~Filemanager(void)
 }
 HBITMAP Filemanager::LoadMyImage( )
 {
-	OPENFILENAME *filename = new OPENFILENAME();
-	GetOpenFileName(filename);
-	return (HBITMAP) LoadImage( NULL, filename->lpstrFile, IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE);
+	OPENFILENAME openFileStruct = {0};
+	TCHAR filename[256] = {0};
+
+	openFileStruct.lStructSize = sizeof(openFileStruct);
+	openFileStruct.lpstrFile = filename;
+	openFileStruct.nMaxFile = sizeof(filename);
+
+	if (GetOpenFileName(&openFileStruct))
+		return (HBITMAP) LoadImage( NULL, openFileStruct.lpstrFile, IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE);
+	else
+		return NULL;
 }

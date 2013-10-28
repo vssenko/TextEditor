@@ -115,6 +115,10 @@ LRESULT TextEditorWindow::OnPaint(BaseWindow* wnd,LPARAM lparam,WPARAM wparam)
 			reinterpret_cast<TextEditorWindow*>(wnd)->DrawBitmap(hdc, 
 				reinterpret_cast<TextEditorWindow*>(wnd)->text->GetBitmapArray()[walker.ifImageThenImageIndex],
 				xcoord,ycoord);
+			BITMAP bm;
+			GetObject(reinterpret_cast<TextEditorWindow*>(wnd)->text->GetBitmapArray()[walker.ifImageThenImageIndex], sizeof(BITMAP),(LPVOID) &bm); 
+			xcoord += bm.bmWidth;
+			ycoord += bm.bmHeight;
 			continue;
 		}
 		GetTextExtentPoint32(hdc,(LPCWSTR)&walker.chr,1, &elementSize);
@@ -185,6 +189,7 @@ LRESULT TextEditorWindow::OnMenuCommand(BaseWindow* wnd,LPARAM lparam,WPARAM wpa
 				Filemanager fileman;
 				HBITMAP vasya = fileman.LoadMyImage();
 				reinterpret_cast<TextEditorWindow*>(wnd)->text->AddBitmap(vasya, reinterpret_cast<TextEditorWindow*>(wnd)->currentPositionToWrite);
+				reinterpret_cast<TextEditorWindow*>(wnd)->currentPositionToWrite++;
 				InvalidateRect(wnd->_hwnd, NULL, TRUE);
 			break;
 	}
