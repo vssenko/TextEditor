@@ -28,4 +28,6 @@
 #include "TextEditorWindow.h"
 #include "TextEditor.h"
 #include "Filemanager.h"
-
+#include "DrawingController.h"
+#include "ActionController.h"
+#include "AllWhatYouWantController.h";

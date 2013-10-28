@@ -2,10 +2,13 @@
 static class Filemanager
 {
 public:
-	Filemanager(void);
+	Filemanager(AllWhatYouWantController* controller);
 	~Filemanager(void);
-	 static HBITMAP LoadMyImage( );
-	 static int SaveFile();
-	 static Text* LoadFile();
+	  int LoadMyImage();
+	  int SaveFile();
+	  int LoadFile();
+	  int NewFile();
+private:
+	AllWhatYouWantController* father;
 };
 

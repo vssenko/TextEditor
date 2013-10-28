@@ -9,22 +9,6 @@ Text::Text(void)
 Text::~Text(void)
 {
 }
-
-std::vector<ExtendedChar> Text::GetStringText(void)
-{
-	return data;
-}
-
-int Text::GetTextLength(void)
-{
-	return (int)data.size();
-}
-
-std::vector<HBITMAP> Text::GetBitmapArray()
-{
-	return images;
-}
-
 int Text:: AddBitmap(HBITMAP bitmap, int pos)
 {
 	if (bitmap ==NULL)

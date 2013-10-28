@@ -10,8 +10,7 @@
 #define ID_IMAGE 6
 TextEditorWindow::TextEditorWindow(void)
 {
-	text = new Text();
-	currentPositionToWrite = 0;
+	controller = new AllWhatYouWantController(this);
 	AddMessage(WM_PAINT, &TextEditorWindow::OnPaint);
 	AddMessage(WM_CHAR, &TextEditorWindow::OnCharPress);
 	AddMessage(WM_DESTROY, &TextEditorWindow::OnDestroy);
@@ -79,75 +78,12 @@ bool  TextEditorWindow::Create(
 //обработчики
 LRESULT TextEditorWindow::OnPaint(BaseWindow* wnd,LPARAM lparam,WPARAM wparam)
 {
-	PAINTSTRUCT ps;
-	HDC hdc;
-	hdc = BeginPaint(wnd->_hwnd, &ps);
-    int xcoord=0, //ииииикс
-		ycoord=0; ///иииигрик
-	LPRECT wndRect = new RECT();
-	SelectObject(hdc, NULL);
-	GetClientRect(wnd->_hwnd, wndRect);
-    std::vector<ExtendedChar> extchrvector = reinterpret_cast<TextEditorWindow*>(wnd)->text->GetStringText();
-	ExtendedChar walker;
-	bool isSelected = reinterpret_cast<TextEditorWindow*>(wnd)->mouseDownPosition != reinterpret_cast<TextEditorWindow*>(wnd)->mouseUpPosition;
-	HFONT currentFont;
-	SIZE elementSize;
-	for(int i= 0; i< extchrvector.size();i++)
-	{
-		if (i == reinterpret_cast<TextEditorWindow*>(wnd)->currentPositionToWrite)
-		{
-			DestroyCaret();
-			CreateCaret(wnd->_hwnd,NULL,1,16);
-			SetCaretPos(xcoord,ycoord);
-			ShowCaret(wnd->_hwnd);
-		}
-		if (isSelected && i == reinterpret_cast<TextEditorWindow*>(wnd)->mouseDownPosition)
-		{
-			SetBkColor(hdc, RGB(0,0,255));
-		}
-		if (isSelected && i == reinterpret_cast<TextEditorWindow*>(wnd)->mouseUpPosition)
-		{
-			SetBkColor(hdc, RGB(255,255,255));
-		}
-		walker = extchrvector[i];
-		if (walker.ifImageThenImageIndex != -1)
-		{
-			reinterpret_cast<TextEditorWindow*>(wnd)->DrawBitmap(hdc, 
-				reinterpret_cast<TextEditorWindow*>(wnd)->text->GetBitmapArray()[walker.ifImageThenImageIndex],
-				xcoord,ycoord);
-			BITMAP bm;
-			GetObject(reinterpret_cast<TextEditorWindow*>(wnd)->text->GetBitmapArray()[walker.ifImageThenImageIndex], sizeof(BITMAP),(LPVOID) &bm); 
-			xcoord += bm.bmWidth;
-			ycoord += bm.bmHeight;
-			continue;
-		}
-		GetTextExtentPoint32(hdc,(LPCWSTR)&walker.chr,1, &elementSize);
-		if ( (xcoord + elementSize.cx) > wndRect->right - wndRect->left)
-		{
-			xcoord = 0;
-			ycoord = ycoord + elementSize.cy;	
-		}
-		::TextOut(hdc,xcoord,ycoord,(LPCWSTR)&walker.chr,1);
-		xcoord = xcoord + elementSize.cx;
-	}
-	EndPaint(wnd->_hwnd, &ps);
-	return 0;
+	reinterpret_cast<TextEditorWindow*>(wnd)->controller->drawingcontrol->PaintAll();
 }
 
 LRESULT TextEditorWindow::OnCharPress(BaseWindow* wnd,LPARAM lparam,WPARAM wparam)
 {
-	if (reinterpret_cast<TextEditorWindow*>(wnd)->mouseDownPosition !=
-		reinterpret_cast<TextEditorWindow*>(wnd)->mouseUpPosition)
-	{
-		reinterpret_cast<TextEditorWindow*>(wnd)->text->DeleteSymbol(
-		reinterpret_cast<TextEditorWindow*>(wnd)->mouseDownPosition,
-		reinterpret_cast<TextEditorWindow*>(wnd)->mouseUpPosition);
-		reinterpret_cast<TextEditorWindow*>(wnd)->mouseUpPosition = reinterpret_cast<TextEditorWindow*>(wnd)->mouseDownPosition;
-		reinterpret_cast<TextEditorWindow*>(wnd)->currentPositionToWrite = reinterpret_cast<TextEditorWindow*>(wnd)->mouseDownPosition;
-	}
-	reinterpret_cast<TextEditorWindow*>(wnd)->text->AddChar((TCHAR) wparam,
-		reinterpret_cast<TextEditorWindow*>(wnd)->currentPositionToWrite);
-	reinterpret_cast<TextEditorWindow*>(wnd)->currentPositionToWrite++;
+	reinterpret_cast<TextEditorWindow*>(wnd)->controller->actioncontrol->CharPress((TCHAR) wparam);
 	InvalidateRect(wnd -> _hwnd, NULL, TRUE);
 	return 0;
 }
@@ -163,7 +99,7 @@ LRESULT TextEditorWindow::OnMenuCommand(BaseWindow* wnd,LPARAM lparam,WPARAM wpa
 	switch (LOWORD(wparam))
 	{
 		case ID_SAVE:
-			reinterpret_cast<TextEditorWindow*>(wnd)->SaveFile();
+			reinterpret_cast<TextEditorWindow*>(wnd)->controller->fileman->SaveFile();
 			break;
 
 		case ID_EXIT:
@@ -171,26 +107,23 @@ LRESULT TextEditorWindow::OnMenuCommand(BaseWindow* wnd,LPARAM lparam,WPARAM wpa
 			break;
 
 		case ID_OPEN:
-			MessageBox(wnd -> _hwnd, L"Hz", L"Hz", 0);
+			reinterpret_cast<TextEditorWindow*>(wnd)->controller->fileman->LoadFile();
 			break;
 
 		case ID_NEW:
-			MessageBox(wnd -> _hwnd, L"Mamku", L"Viebali", 0);
+			reinterpret_cast<TextEditorWindow*>(wnd)->controller->fileman->NewFile();
 			break;
 
 		case ID_CHANGE:
-			MessageBox(wnd -> _hwnd, L"Sosi", L"Hui", 0);
+			reinterpret_cast<TextEditorWindow*>(wnd)->controller->actioncontrol->ChangeFont();
 			break;
 
 		case ID_ABOUT:
 			MessageBox(wnd -> _hwnd, L"Vitalik pizdostradalec",L"About", NULL);
 			break;
 		case ID_IMAGE:
-				Filemanager fileman;
-				HBITMAP vasya = fileman.LoadMyImage();
-				reinterpret_cast<TextEditorWindow*>(wnd)->text->AddBitmap(vasya, reinterpret_cast<TextEditorWindow*>(wnd)->currentPositionToWrite);
-				reinterpret_cast<TextEditorWindow*>(wnd)->currentPositionToWrite++;
-				InvalidateRect(wnd->_hwnd, NULL, TRUE);
+			reinterpret_cast<TextEditorWindow*>(wnd)->controller->fileman->LoadMyImage();
+			InvalidateRect(wnd->_hwnd, NULL, TRUE);
 			break;
 	}
 	return 0;
@@ -198,13 +131,13 @@ LRESULT TextEditorWindow::OnMenuCommand(BaseWindow* wnd,LPARAM lparam,WPARAM wpa
 
 LRESULT TextEditorWindow::OnSizeMove(BaseWindow* wnd,LPARAM lparam,WPARAM wparam)
 {
-	return 0;
+	return 1;
 }
 
 LRESULT TextEditorWindow::OnMouseDown(BaseWindow* wnd,LPARAM lparam,WPARAM wparam)
 {
-	reinterpret_cast<TextEditorWindow*>(wnd)->mouseDownPosition = reinterpret_cast<TextEditorWindow*>(wnd)->CalculatePosition(LOWORD(lparam),HIWORD(lparam));
-	return 00000;
+	reinterpret_cast<TextEditorWindow*>(wnd)->controller->MouseDown(GET_X_LPARAM(lparam), GET_Y_LPARAM(lparam));
+	return 1;
 }
 
 LRESULT TextEditorWindow::OnMouseMove(BaseWindow* wnd,LPARAM lparam,WPARAM wparam)
@@ -214,93 +147,5 @@ LRESULT TextEditorWindow::OnMouseMove(BaseWindow* wnd,LPARAM lparam,WPARAM wpara
 
 LRESULT TextEditorWindow::OnMouseUp(BaseWindow* wnd,LPARAM lparam,WPARAM wparam)
 {
-	reinterpret_cast<TextEditorWindow*>(wnd)->mouseUpPosition = reinterpret_cast<TextEditorWindow*>(wnd)->CalculatePosition(LOWORD(lparam),HIWORD(lparam));
-	reinterpret_cast<TextEditorWindow*>(wnd)->currentPositionToWrite = reinterpret_cast<TextEditorWindow*>(wnd)->mouseUpPosition;
-	if (reinterpret_cast<TextEditorWindow*>(wnd)->mouseDownPosition > reinterpret_cast<TextEditorWindow*>(wnd)->mouseUpPosition)
-	{
-		int temp = reinterpret_cast<TextEditorWindow*>(wnd)->mouseDownPosition;
-		reinterpret_cast<TextEditorWindow*>(wnd)->mouseDownPosition = reinterpret_cast<TextEditorWindow*>(wnd)->mouseUpPosition;
-		reinterpret_cast<TextEditorWindow*>(wnd)->mouseUpPosition = temp;
-	}
-	InvalidateRect(wnd->_hwnd,NULL,TRUE);
 	return 00;
-}
-
-// кончились
-int TextEditorWindow::LoadMyImage()
-{
-	Filemanager manager;
-	HBITMAP bitmp = manager.LoadMyImage();
-	text->AddBitmap(bitmp, currentPositionToWrite);
-	return 11;
-}
-
-int TextEditorWindow::CalculatePosition(int x, int y)
-{
-	POINT pt = POINT();
-	pt.x = x;
-	pt.y = y;
-	PAINTSTRUCT ps;
-	HDC hdc;
-	hdc = BeginPaint(_hwnd, &ps);
-	int xcoord =0 , ycoord = 0;
-	LPRECT wndRect = new RECT();
-	GetClientRect(_hwnd, wndRect);
-    std::vector<ExtendedChar> extchrvector = text->GetStringText();
-	ExtendedChar walker;
-	HFONT currentFont;
-	SIZE elementSize;
-	int i = 0;
-	for(i ; i < extchrvector.size();i++)
-	{
-		walker = extchrvector[i];
-		if (walker.ifImageThenImageIndex != -1)
-		{
-			continue;
-		}
-		GetTextExtentPoint32(hdc,(LPCWSTR)&walker.chr,1, &elementSize);
-		if ((pt.x - xcoord < elementSize.cx) && (pt.y - ycoord < elementSize.cy))
-		{
-			//free(&pt);
-			return i;
-		}
-		if ( (xcoord + elementSize.cx) > wndRect->right - wndRect->left)
-		{
-			xcoord = 0;
-			ycoord = ycoord + elementSize.cy;	
-		}
-		else
-			xcoord+=elementSize.cx;
-	}
-	//free(&pt);
-	return i;
-}
-
-int TextEditorWindow::SaveFile()
-{
-	return 1488;
-}
-
-int TextEditorWindow::DrawBitmap(HDC hdc,HBITMAP hBitmap, int xStart, int yStart) 
-{ 
-	 BITMAP bm; 
-	 HDC hdcMem; 
-	 DWORD dwSize; 
-	 POINT ptSize, ptOrg; 
-	 hdcMem = CreateCompatibleDC(hdc); 
-	 SelectObject(hdcMem, hBitmap); 
-	 SetMapMode(hdcMem, GetMapMode(hdc)); 
-	 GetObject(hBitmap, sizeof(BITMAP),(LPVOID) &bm); 
-	 ptSize.x = bm.bmWidth; 
-	 ptSize.y = bm.bmHeight; 
-	 DPtoLP(hdc, &ptSize, 1); 
-	 ptOrg.x = 0; 
-	 ptOrg.y = 0; 
-	 DPtoLP(hdcMem, &ptOrg, 1); 
-	 BitBlt( 
-	hdc, xStart, yStart, ptSize.x, ptSize.y, 
-	hdcMem, ptOrg.x, ptOrg.y, SRCCOPY 
-	); 
-	 DeleteDC(hdcMem); 
-	 return 1337;
 }

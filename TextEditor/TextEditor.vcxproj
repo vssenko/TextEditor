@@ -77,7 +77,10 @@
     <Text Include="ReadMe.txt" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="ActionController.h" />
+    <ClInclude Include="AllWhatYouWantController.h" />
     <ClInclude Include="BaseWindow.h" />
+    <ClInclude Include="DrawingController.h" />
     <ClInclude Include="ExtendedChar.h" />
     <ClInclude Include="Filemanager.h" />
     <ClInclude Include="Resource.h" />
@@ -88,7 +91,10 @@
     <ClInclude Include="TextEditorWindow.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="ActionController.cpp" />
+    <ClCompile Include="AllWhatYouWantController.cpp" />
     <ClCompile Include="BaseWindow.cpp" />
+    <ClCompile Include="DrawingController.cpp" />
     <ClCompile Include="ExtendedChar.cpp" />
     <ClCompile Include="Filemanager.cpp" />
     <ClCompile Include="stdafx.cpp">

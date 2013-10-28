@@ -2,15 +2,14 @@
 #include "Filemanager.h"
 
 
-Filemanager::Filemanager(void)
+Filemanager::Filemanager(AllWhatYouWantController* controller)
 {
+	father = controller;
 }
-
-
 Filemanager::~Filemanager(void)
 {
 }
-HBITMAP Filemanager::LoadMyImage( )
+int Filemanager::LoadMyImage()
 {
 	OPENFILENAME openFileStruct = {0};
 	TCHAR filename[256] = {0};
@@ -20,7 +19,23 @@ HBITMAP Filemanager::LoadMyImage( )
 	openFileStruct.nMaxFile = sizeof(filename);
 
 	if (GetOpenFileName(&openFileStruct))
-		return (HBITMAP) LoadImage( NULL, openFileStruct.lpstrFile, IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE);
+	{
+		int pos = father->actioncontrol->currentPositionToWrite;
+		father->text->AddBitmap((HBITMAP) LoadImage( NULL, openFileStruct.lpstrFile, IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE), pos);
+		return 1;
+	}
 	else
-		return NULL;
+		return 0;
+}
+int Filemanager::SaveFile()
+{
+	return 1;
+}
+int Filemanager::NewFile()
+{
+	return 1;
+}
+int Filemanager::LoadFile()
+{
+	return 1;
 }

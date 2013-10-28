@@ -3,11 +3,10 @@
 class TextEditorWindow :
 	public BaseWindow
 {
-
 public:
-
 	TextEditorWindow(void);
 	~TextEditorWindow(void);	
+	/////
 	bool Create(
 	HINSTANCE hInstance,
     HWND parent,//Родительское окно, если 0 - то главное окно
@@ -16,11 +15,9 @@ public:
     DWORD style, DWORD exStyle,//Стили окна
     int x,int y,int w,int h//Размеры и положение
     );
-protected:	
-	Text *text;
-	int currentPositionToWrite;
-	int mouseDownPosition;
-	int mouseUpPosition;
+	/////
+protected:
+	AllWhatYouWantController* controller; // главная штука
 	//обработчики ниже
 	static LRESULT OnPaint(BaseWindow* wnd,LPARAM lparam,WPARAM wparam);
 	static LRESULT OnDestroy(BaseWindow* wnd,LPARAM lparam,WPARAM wparam);
@@ -31,11 +28,5 @@ protected:
 	static LRESULT OnMouseMove(BaseWindow* wnd,LPARAM lparam,WPARAM wparam); 
 	static LRESULT OnMouseUp(BaseWindow* wnd,LPARAM lparam,WPARAM wparam); 
 	//обработчики выше
-	int TextEditorWindow::DrawBitmap(HDC hdc, HBITMAP hBitmap, int xStart, int yStart);
-	int LoadMyImage();
-	int SaveFile();
-	int OpenFile();
-private:
-	  int CalculatePosition(int x, int y);
 };
 
