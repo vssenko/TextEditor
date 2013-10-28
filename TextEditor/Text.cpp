@@ -29,7 +29,7 @@ int Text:: AddBitmap(HBITMAP bitmap, int pos)
 {
 	images.push_back(bitmap);
 	ExtendedChar *bitmpchar = new ExtendedChar();
-	bitmpchar->ifImageThenImageIndex = images.size - 1; // последний индекс
+	bitmpchar->ifImageThenImageIndex = images.size() - 1; // последний индекс
 	this->data.insert(data.begin() + pos, *bitmpchar);
 	return 1;
 }

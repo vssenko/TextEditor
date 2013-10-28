@@ -112,6 +112,9 @@ LRESULT TextEditorWindow::OnPaint(BaseWindow* wnd,LPARAM lparam,WPARAM wparam)
 		walker = extchrvector[i];
 		if (walker.ifImageThenImageIndex != -1)
 		{
+			reinterpret_cast<TextEditorWindow*>(wnd)->DrawBitmap(hdc, 
+				reinterpret_cast<TextEditorWindow*>(wnd)->text->GetBitmapArray()[walker.ifImageThenImageIndex],
+				xcoord,ycoord);
 			continue;
 		}
 		GetTextExtentPoint32(hdc,(LPCWSTR)&walker.chr,1, &elementSize);
@@ -178,6 +181,12 @@ LRESULT TextEditorWindow::OnMenuCommand(BaseWindow* wnd,LPARAM lparam,WPARAM wpa
 		case ID_ABOUT:
 			MessageBox(wnd -> _hwnd, L"Vitalik pizdostradalec",L"About", NULL);
 			break;
+		case ID_IMAGE:
+				Filemanager fileman;
+				HBITMAP vasya = fileman.LoadMyImage();
+				reinterpret_cast<TextEditorWindow*>(wnd)->text->AddBitmap(vasya, reinterpret_cast<TextEditorWindow*>(wnd)->currentPositionToWrite);
+				InvalidateRect(wnd->_hwnd, NULL, TRUE);
+			break;
 	}
 	return 0;
 }
@@ -218,7 +227,7 @@ int TextEditorWindow::LoadMyImage()
 	Filemanager manager;
 	HBITMAP bitmp = manager.LoadMyImage();
 	text->AddBitmap(bitmp, currentPositionToWrite);
-
+	return 11;
 }
 
 int TextEditorWindow::CalculatePosition(int x, int y)
@@ -288,5 +297,5 @@ int TextEditorWindow::DrawBitmap(HDC hdc,HBITMAP hBitmap, int xStart, int yStart
 	hdcMem, ptOrg.x, ptOrg.y, SRCCOPY 
 	); 
 	 DeleteDC(hdcMem); 
-
+	 return 1337;
 }
