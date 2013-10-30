@@ -1,15 +1,18 @@
 #include "stdafx.h"
-
-
-
 DrawingController::DrawingController(AllWhatYouWantController* contr)
 {
 	father = contr;
+	delimiters = std::vector<TCHAR>();
+	delimiters.push_back(' ');
+	delimiters.push_back(',');
+	delimiters.push_back('.');
+	delimiters.push_back('!');
+	delimiters.push_back('?');
 }
 DrawingController::~DrawingController(void)
 {
 }
-int DrawingController::DrawBitmap(HDC hdc,HBITMAP hBitmap, int xStart, int yStart) 
+int DrawingController::DrawBitmap(HBITMAP hBitmap) 
 { 
 	 BITMAP bm; 
 	 HDC hdcMem; 
@@ -25,8 +28,8 @@ int DrawingController::DrawBitmap(HDC hdc,HBITMAP hBitmap, int xStart, int yStar
 	 ptOrg.x = 0; 
 	 ptOrg.y = 0; 
 	 DPtoLP(hdcMem, &ptOrg, 1); 
-	 BitBlt( 
-	hdc, xStart, yStart, ptSize.x, ptSize.y, 
+	 BitBlt(
+	hdc, xcoord, ycoord, ptSize.x, ptSize.y, 
 	hdcMem, ptOrg.x, ptOrg.y, SRCCOPY 
 	); 
 	 DeleteDC(hdcMem); 
@@ -34,58 +37,38 @@ int DrawingController::DrawBitmap(HDC hdc,HBITMAP hBitmap, int xStart, int yStar
 }
 int DrawingController::PaintAll()
 {
+	BOOL isCaretLocated = false;
+	xcoord = 0;
+	ycoord = 0;
 	PAINTSTRUCT ps;
-	HDC hdc;
-	hdc = BeginPaint(hWindow->_hwnd, &ps);
-    int xcoord=0, //ииииикс
-		ycoord=0; ///иииигрик
+	hdc = BeginPaint(father->hWindow->_hwnd, &ps);
 	LPRECT wndRect = new RECT();
-	SelectObject(hdc, NULL);
-	GetClientRect(hWindow->_hwnd, wndRect);
-    std::vector<ExtendedChar> extchrvector = text->GetStringText();
-	ExtendedChar walker;
-	bool isSelected = mouseDownPosition != mouseUpPosition;
-	HFONT currentFont;
-	SIZE elementSize;
-	for(int i= 0; i<= extchrvector.size();i++)
+	HFONT currentFont = NULL;
+	GetClientRect(father->hWindow->_hwnd, wndRect);
+    std::vector<ExtendedChar> extchrvector = father->text->data;
+	ExtendedChar walker;	SIZE elementSize;
+	BOOL isSelected = false;
+	for(int i= 0; i< extchrvector.size();i++)
 	{
-		if (i == currentPositionToWrite)
+		if (i == father->actioncontrol->currentPositionToWrite)
 		{
-			DestroyCaret();
-			CreateCaret(hWindow->_hwnd,NULL,1,16);
-			SetCaretPos(xcoord,ycoord);
-			ShowCaret(hWindow->_hwnd);
+			isCaretLocated = true;
+			father->actioncontrol->SetCaret(xcoord,ycoord);
 		}
-		if (isSelected && i == mouseDownPosition)
+		if (i == father->actioncontrol->firstSelectPosition)
 		{
+			isSelected = TRUE;
 			SetBkColor(hdc, RGB(0,0,255));
 		}
-		if (isSelected && i == mouseUpPosition)
+		if (i == father->actioncontrol->secondSelectPosition)
 		{
+			isSelected = FALSE;
 			SetBkColor(hdc, RGB(255,255,255));
 		}
-		if (i == extchrvector.size())
-			break;
 		walker = extchrvector[i];
-		if (walker.ifImageThenImageIndex != -1)
-		{
-			BITMAP bm;
-			GetObject(text->GetBitmapArray()[walker.ifImageThenImageIndex], sizeof(BITMAP),(LPVOID) &bm); 
-			if (bm.bmWidth + xcoord > wndRect->right - wndRect->left)
-			{
-				xcoord = 0;
-				ycoord = 
-			}
-			DrawBitmap(hdc, 
-				text->GetBitmapArray()[walker.ifImageThenImageIndex],
-				xcoord,ycoord);
-			
-			xcoord += bm.bmWidth;
-			ycoord += bm.bmHeight;
-			continue;
-		}
+		DrawExtendedChar(walker);
 		GetTextExtentPoint32(hdc,(LPCWSTR)&walker.chr,1, &elementSize);
-		if ( (xcoord + elementSize.cx) > wndRect->right - wndRect->left)
+		if ((xcoord + elementSize.cx) > wndRect->right - wndRect->left)
 		{
 			xcoord = 0;
 			ycoord = ycoord + elementSize.cy;	
@@ -93,6 +76,27 @@ int DrawingController::PaintAll()
 		::TextOut(hdc,xcoord,ycoord,(LPCWSTR)&walker.chr,1);
 		xcoord = xcoord + elementSize.cx;
 	}
-	EndPaint(hWindow->_hwnd, &ps);
+	if (!isCaretLocated)
+		father->actioncontrol->SetCaret(xcoord,ycoord);
+	EndPaint(father->hWindow->_hwnd, &ps);
+	return 1;
+}
+int DrawingController::DrawExtendedChar(ExtendedChar chr)
+{
+	if ( chr.bmp != NULL)
+	{
+		DrawBitmap(chr.bmp);
+		return 1;
+	}
+
+	return 1;
+}
+int DrawingController::GetExtendedElementSize(ExtendedChar chr, SIZE* size)
+{
+	if (chr.bmp != NULL)
+	{
+
+		return 1;
+	}
 	return 1;
 }

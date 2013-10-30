@@ -1,11 +1,16 @@
 
 #include "stdafx.h"
-
 Text::Text(void)
 {
 	data = std::vector<ExtendedChar>();
 }
-
+int Text::AddChar(TCHAR chr, HFONT font, int pos)
+{
+	ExtendedChar extchr = ExtendedChar();
+	extchr.chr = chr;
+	extchr.font = font;
+	data.insert(data.begin() + pos, extchr);
+}
 Text::~Text(void)
 {
 }
@@ -13,18 +18,9 @@ int Text:: AddBitmap(HBITMAP bitmap, int pos)
 {
 	if (bitmap ==NULL)
 		return 0;
-	images.push_back(bitmap);
-	ExtendedChar *bitmpchar = new ExtendedChar();
-	bitmpchar->ifImageThenImageIndex = images.size() - 1; // последний индекс
-	this->data.insert(data.begin() + pos, *bitmpchar);
-	return 1;
-}
-
-int Text::AddChar(TCHAR chr, int pos)
-{
-	ExtendedChar* newChar = new ExtendedChar();
-	newChar->chr = chr;
-	data.insert(data.begin() + pos, *newChar);
+	ExtendedChar bitmpchar =ExtendedChar();
+	bitmpchar.bmp = bitmap;
+	this->data.insert(data.begin() + pos, bitmpchar);
 	return 1;
 }
 int Text::DeleteSymbol(int pos)

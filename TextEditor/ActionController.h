@@ -1,5 +1,7 @@
+
+#pragma 
 #include "stdafx.h"
-#pragma once
+class AllWhatYouWantController;
 class ActionController
 {
 public:
@@ -8,7 +10,7 @@ public:
 	int currentPositionToWrite;
 	BOOL isStartedSelect;
 	HFONT currentFont;
-	int scale;
+	float scale;
 	ActionController(AllWhatYouWantController* contr);
 	~ActionController(void);
 	int CalculatePosition(int x, int y);
@@ -19,7 +21,7 @@ public:
 	int IncreaseScale();
 	int DecreaseScale();
 	int ChangeFont();
+	int SetCaret(int x, int y);
 private:
 	AllWhatYouWantController* father;
 };
-

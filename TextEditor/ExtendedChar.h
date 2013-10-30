@@ -5,11 +5,7 @@ class ExtendedChar
 public:
 	TCHAR chr;
 	HFONT font;
-	int size;
-	int ifImageThenImageIndex;
-	bool isBold;
-	bool isCursive;
-	bool isUnderLine;
+	HBITMAP bmp;
 	ExtendedChar(void);
 	~ExtendedChar(void);
 };

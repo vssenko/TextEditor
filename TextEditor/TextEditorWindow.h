@@ -1,5 +1,6 @@
 #pragma once
 #include "stdafx.h"
+class AllWhatYouWantController;
 class TextEditorWindow :
 	public BaseWindow
 {

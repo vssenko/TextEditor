@@ -1,12 +1,8 @@
 #include "stdafx.h"
-
-
-
 ExtendedChar::ExtendedChar(void)
 {
-	ifImageThenImageIndex = -1;
+	bmp = NULL;
 }
-
 
 ExtendedChar::~ExtendedChar(void)
 {

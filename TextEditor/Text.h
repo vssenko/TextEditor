@@ -9,7 +9,7 @@ public:
 	int DeleteSymbol(int pos);
 	int DeleteSymbol(int pos1, int pos2);
 	int AddBitmap(HBITMAP bitmap, int pos);
+	int AddChar(TCHAR chr, HFONT font, int pos);
 	std::vector<ExtendedChar> data;
-	std::vector<HBITMAP> images;
 };
 

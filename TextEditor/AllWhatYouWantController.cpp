@@ -8,6 +8,7 @@ AllWhatYouWantController::AllWhatYouWantController(TextEditorWindow* window)
 	actioncontrol = new ActionController(this);
 	drawingcontrol = new DrawingController(this);
 	fileman = new Filemanager(this);
+	text = new Text();
 }
 
 AllWhatYouWantController::~AllWhatYouWantController(void)

@@ -1,7 +1,4 @@
 #include "stdafx.h"
-#include "Filemanager.h"
-
-
 Filemanager::Filemanager(AllWhatYouWantController* controller)
 {
 	father = controller;

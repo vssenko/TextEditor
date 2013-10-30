@@ -74,11 +74,11 @@ bool  TextEditorWindow::Create(
 	if(!_hwnd) return false;
     return true;
 }
-
 //обработчики
 LRESULT TextEditorWindow::OnPaint(BaseWindow* wnd,LPARAM lparam,WPARAM wparam)
 {
 	reinterpret_cast<TextEditorWindow*>(wnd)->controller->drawingcontrol->PaintAll();
+	return 1;
 }
 
 LRESULT TextEditorWindow::OnCharPress(BaseWindow* wnd,LPARAM lparam,WPARAM wparam)
@@ -136,7 +136,7 @@ LRESULT TextEditorWindow::OnSizeMove(BaseWindow* wnd,LPARAM lparam,WPARAM wparam
 
 LRESULT TextEditorWindow::OnMouseDown(BaseWindow* wnd,LPARAM lparam,WPARAM wparam)
 {
-	reinterpret_cast<TextEditorWindow*>(wnd)->controller->MouseDown(GET_X_LPARAM(lparam), GET_Y_LPARAM(lparam));
+	//reinterpret_cast<TextEditorWindow*>(wnd)->controller->actioncontrol->Mous
 	return 1;
 }
 

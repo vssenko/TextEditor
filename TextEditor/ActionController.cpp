@@ -7,13 +7,19 @@ ActionController::ActionController(AllWhatYouWantController* contr)
 	currentPositionToWrite = 0;
 	firstSelectPosition = 0;
 	secondSelectPosition = 0;
+	scale = 1;
+	currentFont = (HFONT) GetStockObject(DEFAULT_GUI_FONT);
 }
-
 ActionController::~ActionController(void)
 {
 }
 int ActionController::CharPress(TCHAR chr)
 {
+	ExtendedChar charrr =  ExtendedChar();
+	charrr.font = currentFont;
+	charrr.chr = chr;
+	father->text->data.insert(father->text->data.begin() + currentPositionToWrite, charrr);
+	currentPositionToWrite++;
 	return 1;
 }
 int ActionController::MoveSelected()
@@ -26,10 +32,20 @@ int ActionController::Select(int pos1, int pos2)
 }
 int ActionController::IncreaseScale()
 {
+	scale = scale +0.1;
+	if (scale > 2)
+	{
+		scale = 2;
+	}
 	return 1;
 }
 int ActionController::DecreaseScale()
 {
+	scale = scale - 0.1;
+	if (scale < 0.5)
+	{
+		scale = 0.5;
+	}
 	return 1;
 }
 int ActionController::SpecialKeyPressed(WPARAM key)
@@ -47,7 +63,7 @@ int ActionController::CalculatePosition(int x, int y)
 	int xcoord =0 , ycoord = 0;
 	LPRECT wndRect = new RECT();
 	GetClientRect(father->hWindow->_hwnd, wndRect);
-    std::vector<ExtendedChar> extchrvector = father->text->GetStringText();
+    std::vector<ExtendedChar> extchrvector = father->text->data;
 	ExtendedChar walker;
 	HFONT currentFont;
 	SIZE elementSize;
@@ -76,8 +92,33 @@ int ActionController::CalculatePosition(int x, int y)
 	//free(&pt);
 	return i;
 }
-
+int ActionController::SetCaret(int x, int y)
+{
+	DestroyCaret();
+	CreateCaret(father->hWindow->_hwnd,NULL,1,16);
+	SetCaretPos(x, y);
+	ShowCaret(father->hWindow->_hwnd);
+	return 1;
+}
 int ActionController::ChangeFont()
 {
+	HDC hdc = GetDC(father->hWindow->_hwnd);
+	CHOOSEFONT cf;            // common dialog box structure
+	static LOGFONT lf;        // logical font structure
+	static DWORD rgbCurrent;  // current text color
+	HFONT hfont, hfontPrev;
+	DWORD rgbPrev;
+	// Initialize CHOOSEFONT
+	ZeroMemory(&cf, sizeof(cf));
+	cf.lStructSize = sizeof (cf);
+	cf.hwndOwner = father->hWindow->_hwnd;
+	cf.lpLogFont = &lf;
+	cf.rgbColors = rgbCurrent;
+	cf.Flags = CF_SCREENFONTS | CF_EFFECTS;
+	if (ChooseFont(&cf)==TRUE)
+	{
+		hfont = CreateFontIndirect(cf.lpLogFont);
+		currentFont = hfont;
+	}
 	return 1;
 }

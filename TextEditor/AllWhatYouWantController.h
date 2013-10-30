@@ -1,3 +1,6 @@
+
+
+#include "TextEditorWindow.h"
 #include "stdafx.h"
 #pragma once
 class AllWhatYouWantController
@@ -11,4 +14,3 @@ public:
 	Text *text;
 	TextEditorWindow* hWindow;
 };
-

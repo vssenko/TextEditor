@@ -25,9 +25,9 @@
 #include "ExtendedChar.h"
 #include "Text.h"
 #include "BaseWindow.h"
-#include "TextEditorWindow.h"
-#include "TextEditor.h"
-#include "Filemanager.h"
 #include "DrawingController.h"
 #include "ActionController.h"
-#include "AllWhatYouWantController.h";
+#include "Filemanager.h"
+#include "AllWhatYouWantController.h"
+#include "TextEditorWindow.h"
+#include "TextEditor.h"

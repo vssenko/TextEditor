@@ -1,5 +1,8 @@
+
 #pragma once
-static class Filemanager
+#include "stdafx.h"
+class AllWhatYouWantController;
+ class Filemanager
 {
 public:
 	Filemanager(AllWhatYouWantController* controller);
