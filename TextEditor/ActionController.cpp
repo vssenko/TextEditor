@@ -13,11 +13,11 @@ ActionController::ActionController(AllWhatYouWantController* contr)
 ActionController::~ActionController(void)
 {
 }
-int ActionController::CharPress(TCHAR chr)
+int ActionController::CharPress(LPARAM lparam, WPARAM wparam)
 {
 	ExtendedChar charrr =  ExtendedChar();
 	charrr.font = currentFont;
-	charrr.chr = chr;
+	charrr.chr = (TCHAR) wparam;
 	father->text->data.insert(father->text->data.begin() + currentPositionToWrite, charrr);
 	currentPositionToWrite++;
 	return 1;
@@ -71,7 +71,7 @@ int ActionController::CalculatePosition(int x, int y)
 	for(i ; i < extchrvector.size();i++)
 	{
 		walker = extchrvector[i];
-		if (walker.ifImageThenImageIndex != -1)
+		if (walker.bmp != NULL)
 		{
 			continue;
 		}
@@ -91,14 +91,6 @@ int ActionController::CalculatePosition(int x, int y)
 	}
 	//free(&pt);
 	return i;
-}
-int ActionController::SetCaret(int x, int y)
-{
-	DestroyCaret();
-	CreateCaret(father->hWindow->_hwnd,NULL,1,16);
-	SetCaretPos(x, y);
-	ShowCaret(father->hWindow->_hwnd);
-	return 1;
 }
 int ActionController::ChangeFont()
 {

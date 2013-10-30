@@ -83,7 +83,7 @@ LRESULT TextEditorWindow::OnPaint(BaseWindow* wnd,LPARAM lparam,WPARAM wparam)
 
 LRESULT TextEditorWindow::OnCharPress(BaseWindow* wnd,LPARAM lparam,WPARAM wparam)
 {
-	reinterpret_cast<TextEditorWindow*>(wnd)->controller->actioncontrol->CharPress((TCHAR) wparam);
+	reinterpret_cast<TextEditorWindow*>(wnd)->controller->actioncontrol->CharPress(lparam, wparam);
 	InvalidateRect(wnd -> _hwnd, NULL, TRUE);
 	return 0;
 }

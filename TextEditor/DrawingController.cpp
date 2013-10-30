@@ -37,23 +37,24 @@ int DrawingController::DrawBitmap(HBITMAP hBitmap)
 }
 int DrawingController::PaintAll()
 {
-	BOOL isCaretLocated = false;
+	BOOL isCaretLocated = false, isSelected = false, isSingleWord = false;
 	xcoord = 0;
 	ycoord = 0;
+	int maxLineY = 0;
 	PAINTSTRUCT ps;
 	hdc = BeginPaint(father->hWindow->_hwnd, &ps);
 	LPRECT wndRect = new RECT();
-	HFONT currentFont = NULL;
+	currentFont = NULL;
 	GetClientRect(father->hWindow->_hwnd, wndRect);
     std::vector<ExtendedChar> extchrvector = father->text->data;
-	ExtendedChar walker;	SIZE elementSize;
-	BOOL isSelected = false;
+	ExtendedChar walker;	
+	SIZE* elementSize = new SIZE();
 	for(int i= 0; i< extchrvector.size();i++)
 	{
 		if (i == father->actioncontrol->currentPositionToWrite)
 		{
 			isCaretLocated = true;
-			father->actioncontrol->SetCaret(xcoord,ycoord);
+			SetCaret(xcoord,ycoord);
 		}
 		if (i == father->actioncontrol->firstSelectPosition)
 		{
@@ -66,18 +67,33 @@ int DrawingController::PaintAll()
 			SetBkColor(hdc, RGB(255,255,255));
 		}
 		walker = extchrvector[i];
-		DrawExtendedChar(walker);
-		GetTextExtentPoint32(hdc,(LPCWSTR)&walker.chr,1, &elementSize);
-		if ((xcoord + elementSize.cx) > wndRect->right - wndRect->left)
+		SetFont(walker);
+		if (isSingleWord)
+		{
+			if(GetWordSize(hdc,father->text,i,elementSize))
+			{
+				if (xcoord + elementSize->cx > wndRect->right - wndRect->left)
+				{
+					xcoord = 0;
+					ycoord += maxLineY;
+				}
+			}
+			isSingleWord = false;
+		}
+		GetExtendedElementSize(hdc,walker,elementSize);
+		if ((xcoord + elementSize->cx) > wndRect->right - wndRect->left)
 		{
 			xcoord = 0;
-			ycoord = ycoord + elementSize.cy;	
+			ycoord = ycoord + maxLineY;	
 		}
-		::TextOut(hdc,xcoord,ycoord,(LPCWSTR)&walker.chr,1);
-		xcoord = xcoord + elementSize.cx;
+		DrawExtendedChar(walker);
+		xcoord = xcoord + elementSize->cx + 1;// ПЛЮС ОДИНОДИН)))0000
+		if (IsDelimiter(walker) )
+			isSingleWord = true;
+		maxLineY = max(maxLineY, elementSize->cy);
 	}
 	if (!isCaretLocated)
-		father->actioncontrol->SetCaret(xcoord,ycoord);
+		SetCaret(xcoord,ycoord);
 	EndPaint(father->hWindow->_hwnd, &ps);
 	return 1;
 }
@@ -88,15 +104,88 @@ int DrawingController::DrawExtendedChar(ExtendedChar chr)
 		DrawBitmap(chr.bmp);
 		return 1;
 	}
-
+	else
+	{
+		SetFont(chr);
+		::TextOut(hdc,xcoord,ycoord,(LPCWSTR)&chr.chr,1);
+		return 1;
+	}
+}
+int DrawingController::SetCaret(int x, int y)
+{
+	DestroyCaret();
+	CreateCaret(father->hWindow->_hwnd,NULL,1,16);
+	SetCaretPos(x, y);
+	ShowCaret(father->hWindow->_hwnd);
 	return 1;
 }
-int DrawingController::GetExtendedElementSize(ExtendedChar chr, SIZE* size)
+int DrawingController::GetExtendedElementSize(HDC hdc, ExtendedChar chr, SIZE* size)
 {
 	if (chr.bmp != NULL)
 	{
-
+		BITMAP realbmp;
+		GetObject(chr.bmp, sizeof(BITMAP),(LPVOID) &realbmp); 
+		size->cx = realbmp.bmWidth;
+		size->cy = realbmp.bmHeight;
 		return 1;
+	}
+	SIZE sz;
+	if (currentFont != chr.font)
+	{
+		HFONT prevFont = (HFONT) SelectObject(hdc,chr.font);
+		GetTextExtentPoint32(hdc,(LPCWSTR)&chr.chr,1, &sz);
+		SelectObject(hdc,prevFont);
+	}
+	else
+	{
+		GetTextExtentPoint32(hdc,(LPCWSTR)&chr.chr,1, &sz);
+	}
+	size->cx = sz.cx;
+	size->cy = sz.cy;
+	return 1;
+}
+BOOL DrawingController::GetWordSize(HDC hdc, Text* text, int currentpos, SIZE* size)//меняет size, возвращает, были ли дальше разделители
+{
+	SIZE* currentSize = new SIZE();
+	size->cx = 0;
+	size-> cy = 0;
+	ExtendedChar walker;
+	BOOL isDelimiter = false;
+	for (int i = currentpos; i< text->data.size(); i++)
+	{
+		walker = text->data[i];
+		if (IsDelimiter(walker))
+		{
+			isDelimiter = true;
+			break;
+		}
+		if (walker.bmp != NULL)
+			isDelimiter = true;
+		if (isDelimiter)
+			break;
+		GetExtendedElementSize(hdc,walker,currentSize);
+		size->cx += currentSize->cx;
+		size->cy = max(size->cy,currentSize->cy);
+	}
+	return true;
+}
+BOOL DrawingController::IsDelimiter(ExtendedChar chr)
+{
+	BOOL isDelimiter = false;
+	for (int j=0; j< delimiters.size(); j++)
+		if ( chr.chr == delimiters[j])
+		{
+			isDelimiter = true;
+			break;
+		}
+	return isDelimiter;
+}
+int DrawingController::SetFont(ExtendedChar chr)
+{
+	if (currentFont != chr.font)
+	{
+		SelectObject(hdc,chr.font);
+		currentFont = chr.font;
 	}
 	return 1;
 }

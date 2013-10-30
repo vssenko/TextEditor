@@ -10,6 +10,7 @@ int Text::AddChar(TCHAR chr, HFONT font, int pos)
 	extchr.chr = chr;
 	extchr.font = font;
 	data.insert(data.begin() + pos, extchr);
+	return 1;
 }
 Text::~Text(void)
 {
