@@ -116,7 +116,7 @@ int DrawingController::PaintAll(POINT* mouseCoord, INT* position)//не только рис
 		}
 		else
 			DrawExtendedChar(walker);
-		xcoord = xcoord + elementSize->cx;// каретка сместится, эмм, не учитывая "обратного смещения"
+		xcoord = xcoord + elementSize->cx;
 		if (IsDelimiter(walker) )
 			isSingleWord = true;
 		maxLineY = max(maxLineY, elementSize->cy);
