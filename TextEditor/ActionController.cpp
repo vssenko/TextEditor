@@ -72,12 +72,43 @@ int ActionController::SpecialKeyPressed(WPARAM key)
 {
 	return 1;
 }
-int ActionController::CalculatePosition(int x, int y)
+int ActionController::CalculatePosition(int x, int y)//возвращает позицию!
 {
 	POINT pt = POINT();
 	pt.x = x;
 	pt.y = y;
 	int position = 0;
+	std::vector< std::pair<ExtendedChar,POINT> > map = std::vector< std::pair<ExtendedChar,POINT> >();
+	CalculateExtendCharCoordinates(&map);
+	HDC hdc = GetDC(father->hWindow->_hwnd);
+	SIZE vasya = SIZE();
+	father->drawingcontrol->GetExtendedElementSize(hdc,map.back().first, &vasya);
+	int mindy = 10000000, mindx = 10000000;
+	int currentdelta;
+	for (int i = 0; i< map.size(); i++)
+	{
+		currentdelta = y - map[i].second.y;
+		if (currentdelta>=0)
+			mindy = min(mindy, currentdelta);
+	}
+	for (int i = 0; i< map.size(); i++)
+	{
+		if (y - map[i].second.y == mindy)
+		{
+			currentdelta = x - map[i].second.x;
+			if (currentdelta >= 0)
+				mindx = min(mindx, currentdelta);
+		}
+	}
+	for (int i = 0; i < map.size(); i++)
+	{
+		if ((y - map[i].second.y == mindy) &&
+			(x - map[i].second.x == mindx))
+		{
+			position = i;
+			break;
+		}
+	}
 	return position;
 }
 int ActionController::ChangeFont()
@@ -104,7 +135,7 @@ int ActionController::ChangeFont()
 }
 int ActionController::SetFocus()
 {
-	father->drawingcontrol->PaintCaret();
+	InvalidateRect(father->hWindow->_hwnd, NULL,TRUE);
 	return 1;
 }
 int ActionController::CalculateExtendCharCoordinates(std::vector<std::pair<ExtendedChar,POINT>>* map)
@@ -121,6 +152,10 @@ int ActionController::CalculateExtendCharCoordinates(std::vector<std::pair<Exten
 	GetClientRect(father->hWindow->_hwnd, wndRect);
     std::vector<ExtendedChar> extchrvector = father->text->data;
 	TEXTMETRIC tm;
+	ExtendedChar vasya = ExtendedChar();
+	vasya.chr = '\0';
+	vasya.font = currentFont;
+	extchrvector.push_back(vasya);
 	if (extchrvector.size() > 0)
 	{
 		SelectObject(hdc,extchrvector[0].font);

@@ -139,7 +139,7 @@ LRESULT TextEditorWindow::OnSizeMove(BaseWindow* wnd,LPARAM lparam,WPARAM wparam
 LRESULT TextEditorWindow::OnMouseDown(BaseWindow* wnd,LPARAM lparam,WPARAM wparam)
 {
 	int positionpressed = reinterpret_cast<TextEditorWindow*>(wnd)->controller->actioncontrol->CalculatePosition(GET_X_LPARAM(lparam), GET_Y_LPARAM(lparam));
-	reinterpret_cast<TextEditorWindow*>(wnd)->controller->actioncontrol->Select( positionpressed, -1);
+	reinterpret_cast<TextEditorWindow*>(wnd)->controller->actioncontrol->Select(positionpressed, positionpressed);
 	reinterpret_cast<TextEditorWindow*>(wnd)->controller->actioncontrol->isStartedSelect = true;
 	return 1;
 }

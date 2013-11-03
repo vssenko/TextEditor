@@ -8,6 +8,8 @@ DrawingController::DrawingController(AllWhatYouWantController* contr)
 	delimiters.push_back('.');
 	delimiters.push_back('!');
 	delimiters.push_back('?');
+	delimiters.push_back('-');
+	delimiters.push_back(':');
 	caretPosX = 0;
 	caretPosY = 0;
 }
@@ -48,6 +50,7 @@ int DrawingController::PaintAll()
 	PAINTSTRUCT ps;
 	std::vector<std::pair<ExtendedChar,POINT>> map;
 	father->actioncontrol->CalculateExtendCharCoordinates(&map);
+	map.pop_back(); // удаляем последний "нулевой" символ
 	RECT* wndRect = new RECT();
 	GetClientRect(father->hWindow->_hwnd, wndRect);
 	std::pair<ExtendedChar,POINT> walker;
