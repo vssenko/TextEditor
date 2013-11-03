@@ -1,6 +1,4 @@
-
 #pragma once
-
 #include "stdafx.h"
 class AllWhatYouWantController;
 class DrawingController
@@ -8,8 +6,8 @@ class DrawingController
 public:
 	DrawingController(AllWhatYouWantController* contr);
 	~DrawingController(void);
-	int PaintAll();
-	int SetCaret(int x, int y);
+	int PaintAll(POINT* mouseCoord,INT* position); // одновременно и рисует, и позицию ищет, классно же
+	int PaintCaret();
 	int GetExtendedElementSize(HDC hdc, ExtendedChar chr, SIZE* size);
 	BOOL GetWordSize(HDC hdc, Text* text, int currentpos, SIZE* size);
 	BOOL IsDelimiter(ExtendedChar chr);
@@ -20,6 +18,8 @@ private:
 	std::vector<TCHAR> delimiters;
 	int xcoord;
 	int ycoord;
+	int caretPosX;
+	int caretPosY;
 	HFONT currentFont;
 	HDC hdc;
 	AllWhatYouWantController* father;

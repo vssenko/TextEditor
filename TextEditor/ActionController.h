@@ -21,7 +21,7 @@ public:
 	int IncreaseScale();
 	int DecreaseScale();
 	int ChangeFont();
-
+	int SetFocus();
 private:
 	AllWhatYouWantController* father;
 };

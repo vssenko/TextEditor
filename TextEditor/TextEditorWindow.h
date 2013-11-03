@@ -18,7 +18,7 @@ public:
     );
 	/////
 protected:
-	AllWhatYouWantController* controller; // главная штука
+	AllWhatYouWantController* controller;
 	//обработчики ниже
 	static LRESULT OnPaint(BaseWindow* wnd,LPARAM lparam,WPARAM wparam);
 	static LRESULT OnDestroy(BaseWindow* wnd,LPARAM lparam,WPARAM wparam);
@@ -28,6 +28,8 @@ protected:
 	static LRESULT OnMouseDown(BaseWindow* wnd,LPARAM lparam,WPARAM wparam); 
 	static LRESULT OnMouseMove(BaseWindow* wnd,LPARAM lparam,WPARAM wparam); 
 	static LRESULT OnMouseUp(BaseWindow* wnd,LPARAM lparam,WPARAM wparam); 
+	static LRESULT OnSetFocus(BaseWindow* wnd,LPARAM lparam,WPARAM wparam); 
+	static LRESULT OnKillFocus(BaseWindow* wnd,LPARAM lparam,WPARAM wparam); 
 	//обработчики выше
 };
 

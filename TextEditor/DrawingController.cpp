@@ -8,6 +8,8 @@ DrawingController::DrawingController(AllWhatYouWantController* contr)
 	delimiters.push_back('.');
 	delimiters.push_back('!');
 	delimiters.push_back('?');
+	caretPosX = 0;
+	caretPosY = 0;
 }
 DrawingController::~DrawingController(void)
 {
@@ -35,33 +37,48 @@ int DrawingController::DrawBitmap(HBITMAP hBitmap)
 	 DeleteDC(hdcMem); 
 	 return 1337;
 }
-int DrawingController::PaintAll()
+int DrawingController::PaintAll(POINT* mouseCoord, INT* position)//не только рисует, но и позицию ищет
 {
-	BOOL isCaretLocated = false, isSelected = false, isSingleWord = false;
+	BOOL isCaretLocated = false, isSelected = false, isSingleWord = false,isNeedToFindPosition = false;
+	if (mouseCoord != NULL && position != NULL)
+		isNeedToFindPosition = true;
 	xcoord = 0;
 	ycoord = 0;
 	int maxLineY = 0;
 	PAINTSTRUCT ps;
 	hdc = BeginPaint(father->hWindow->_hwnd, &ps);
+	SetTextAlign(hdc, TA_LEFT);
 	LPRECT wndRect = new RECT();
 	currentFont = NULL;
 	GetClientRect(father->hWindow->_hwnd, wndRect);
     std::vector<ExtendedChar> extchrvector = father->text->data;
+	TEXTMETRIC tm;
+	if (extchrvector.size() > 0)
+	{
+		SelectObject(hdc,extchrvector[0].font);
+		GetTextMetrics(hdc,&tm);
+		xcoord = tm.tmInternalLeading;
+	}
 	ExtendedChar walker;	
 	SIZE* elementSize = new SIZE();
+	std::vector<POINT> points;
 	for(int i= 0; i< extchrvector.size();i++)
 	{
 		if (i == father->actioncontrol->currentPositionToWrite)
 		{
 			isCaretLocated = true;
-			SetCaret(xcoord,ycoord);
+			caretPosX = xcoord;
+			caretPosY = ycoord;
+			PaintCaret();
 		}
-		if (i == father->actioncontrol->firstSelectPosition)
+		if (i == min(father->actioncontrol->firstSelectPosition,
+			father->actioncontrol->secondSelectPosition))
 		{
 			isSelected = TRUE;
 			SetBkColor(hdc, RGB(0,0,255));
 		}
-		if (i == father->actioncontrol->secondSelectPosition)
+		if (i == max(father->actioncontrol->firstSelectPosition,
+			father->actioncontrol->secondSelectPosition))
 		{
 			isSelected = FALSE;
 			SetBkColor(hdc, RGB(255,255,255));
@@ -74,8 +91,10 @@ int DrawingController::PaintAll()
 			{
 				if (xcoord + elementSize->cx > wndRect->right - wndRect->left)
 				{
-					xcoord = 0;
+					GetTextMetrics(hdc,&tm);
+					xcoord = tm.tmInternalLeading;
 					ycoord += maxLineY;
+					maxLineY = 0;
 				}
 			}
 			isSingleWord = false;
@@ -83,18 +102,62 @@ int DrawingController::PaintAll()
 		GetExtendedElementSize(hdc,walker,elementSize);
 		if ((xcoord + elementSize->cx) > wndRect->right - wndRect->left)
 		{
-			xcoord = 0;
+			GetTextMetrics(hdc,&tm);
+			xcoord = tm.tmInternalLeading;
 			ycoord = ycoord + maxLineY;	
+			maxLineY = 0;
 		}
-		DrawExtendedChar(walker);
-		xcoord = xcoord + elementSize->cx + 1;// ПЛЮС ОДИНОДИН)))0000
+		if (isNeedToFindPosition)
+		{
+			POINT vasya = POINT();
+			vasya.x = xcoord;
+			vasya.y = ycoord;
+			points.push_back(vasya);
+		}
+		else
+			DrawExtendedChar(walker);
+		xcoord = xcoord + elementSize->cx;// каретка сместится, эмм, не учитывая "обратного смещения"
 		if (IsDelimiter(walker) )
 			isSingleWord = true;
 		maxLineY = max(maxLineY, elementSize->cy);
 	}
 	if (!isCaretLocated)
-		SetCaret(xcoord,ycoord);
+	{
+		caretPosX = xcoord;
+		caretPosY = ycoord;
+		PaintCaret();
+	}
+	if (isSelected)
+	{
+		isSelected = FALSE;
+		SetBkColor(hdc, RGB(255,255,255));
+	}
+	if (isNeedToFindPosition)
+	{
+		int mindy = 100000,  mindx = 100000;
+		for(int i = 0; i< points.size(); i++)
+		{
+			if ((points[i].y - mouseCoord->x < mindy) 
+				&&(points[i].y - mouseCoord->x>=0))
+			{
+				mindy = points[i].y - mouseCoord->x;
+			}
+		}
+		int pos = points.size();
+		for(int i = 0; i< points.size(); i++)
+		{
+			if( (points[i].y - mouseCoord->y == mindy)
+				&&(points[i].x -mouseCoord->x <mindx)
+				&&(points[i].x -mouseCoord->x >= 0))
+			{
+				pos = i;
+				mindx = points[i].x -mouseCoord->x;
+			}
+		}
+		*position = pos;
+	}
 	EndPaint(father->hWindow->_hwnd, &ps);
+	delete elementSize;
 	return 1;
 }
 int DrawingController::DrawExtendedChar(ExtendedChar chr)
@@ -107,15 +170,18 @@ int DrawingController::DrawExtendedChar(ExtendedChar chr)
 	else
 	{
 		SetFont(chr);
-		::TextOut(hdc,xcoord,ycoord,(LPCWSTR)&chr.chr,1);
+		::TextOut(hdc, xcoord, ycoord, (LPCWSTR) &chr.chr, 1 );
 		return 1;
 	}
 }
-int DrawingController::SetCaret(int x, int y)
+int DrawingController::PaintCaret()
 {
 	DestroyCaret();
-	CreateCaret(father->hWindow->_hwnd,NULL,1,16);
-	SetCaretPos(x, y);
+	TEXTMETRIC tm;
+	SelectObject(hdc, father->actioncontrol->currentFont);
+	GetTextMetrics(hdc,&tm);
+	CreateCaret(father->hWindow->_hwnd,NULL,1, tm.tmHeight);
+	SetCaretPos(caretPosX, caretPosY);
 	ShowCaret(father->hWindow->_hwnd);
 	return 1;
 }
@@ -132,13 +198,18 @@ int DrawingController::GetExtendedElementSize(HDC hdc, ExtendedChar chr, SIZE* s
 	SIZE sz;
 	if (currentFont != chr.font)
 	{
+		TEXTMETRIC tm;
 		HFONT prevFont = (HFONT) SelectObject(hdc,chr.font);
+		GetTextMetrics(hdc,&tm);
 		GetTextExtentPoint32(hdc,(LPCWSTR)&chr.chr,1, &sz);
-		SelectObject(hdc,prevFont);
+		sz.cx += tm.tmInternalLeading;
 	}
 	else
 	{
+		TEXTMETRIC tm;
+		GetTextMetrics(hdc,&tm);
 		GetTextExtentPoint32(hdc,(LPCWSTR)&chr.chr,1, &sz);
+		sz.cx += tm.tmInternalLeading;
 	}
 	size->cx = sz.cx;
 	size->cy = sz.cy;
@@ -186,6 +257,10 @@ int DrawingController::SetFont(ExtendedChar chr)
 	{
 		SelectObject(hdc,chr.font);
 		currentFont = chr.font;
+		TEXTMETRIC tm; 
+		GetTextMetrics(hdc, &tm);
+		//int i =0;
+		//i++;
 	}
 	return 1;
 }

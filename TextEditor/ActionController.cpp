@@ -7,6 +7,7 @@ ActionController::ActionController(AllWhatYouWantController* contr)
 	currentPositionToWrite = 0;
 	firstSelectPosition = 0;
 	secondSelectPosition = 0;
+	isStartedSelect = false;
 	scale = 1;
 	currentFont = (HFONT) GetStockObject(DEFAULT_GUI_FONT);
 }
@@ -26,8 +27,27 @@ int ActionController::MoveSelected()
 {
 	return 1;
 }
-int ActionController::Select(int pos1, int pos2)
+int ActionController::Select(int pos1, int pos2)// если позиция меньше нуля, то не трогаем ее
 {
+	int cfp = firstSelectPosition;
+	int csp = secondSelectPosition;
+	if ( (pos1>=0) && (pos2>=0))
+	{
+		firstSelectPosition = pos1;
+		secondSelectPosition = pos2;
+	}
+	else
+	if (pos1>=0)
+	{
+		firstSelectPosition = pos1;
+	}
+	else
+	if (pos2>=0)
+	{
+		secondSelectPosition = pos2;
+	}
+	if(firstSelectPosition !=cfp || secondSelectPosition != csp)
+		InvalidateRect(father->hWindow->_hwnd,NULL,TRUE);
 	return 1;
 }
 int ActionController::IncreaseScale()
@@ -57,44 +77,12 @@ int ActionController::CalculatePosition(int x, int y)
 	POINT pt = POINT();
 	pt.x = x;
 	pt.y = y;
-	PAINTSTRUCT ps;
-	HDC hdc;
-	hdc = BeginPaint(father->hWindow->_hwnd, &ps);
-	int xcoord =0 , ycoord = 0;
-	LPRECT wndRect = new RECT();
-	GetClientRect(father->hWindow->_hwnd, wndRect);
-    std::vector<ExtendedChar> extchrvector = father->text->data;
-	ExtendedChar walker;
-	HFONT currentFont;
-	SIZE elementSize;
-	int i = 0;
-	for(i ; i < extchrvector.size();i++)
-	{
-		walker = extchrvector[i];
-		if (walker.bmp != NULL)
-		{
-			continue;
-		}
-		GetTextExtentPoint32(hdc,(LPCWSTR)&walker.chr,1, &elementSize);
-		if ((pt.x - xcoord < elementSize.cx) && (pt.y - ycoord < elementSize.cy))
-		{
-			//free(&pt);
-			return i;
-		}
-		if ( (xcoord + elementSize.cx) > wndRect->right - wndRect->left)
-		{
-			xcoord = 0;
-			ycoord = ycoord + elementSize.cy;	
-		}
-		else
-			xcoord+=elementSize.cx;
-	}
-	//free(&pt);
-	return i;
+	int position = 0;
+	father->drawingcontrol->PaintAll(&pt,&position);
+	return position;
 }
 int ActionController::ChangeFont()
 {
-	HDC hdc = GetDC(father->hWindow->_hwnd);
 	CHOOSEFONT cf;            // common dialog box structure
 	static LOGFONT lf;        // logical font structure
 	static DWORD rgbCurrent;  // current text color
@@ -112,5 +100,11 @@ int ActionController::ChangeFont()
 		hfont = CreateFontIndirect(cf.lpLogFont);
 		currentFont = hfont;
 	}
+	father->drawingcontrol->PaintAll(NULL,NULL);
+	return 1;
+}
+int ActionController::SetFocus()
+{
+	father->drawingcontrol->PaintCaret();
 	return 1;
 }
