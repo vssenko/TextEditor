@@ -6,11 +6,12 @@ class DrawingController
 public:
 	DrawingController(AllWhatYouWantController* contr);
 	~DrawingController(void);
-	int PaintAll(POINT* mouseCoord,INT* position); // одновременно и рисует, и позицию ищет, классно же
+	int PaintAll();
 	int PaintCaret();
 	int GetExtendedElementSize(HDC hdc, ExtendedChar chr, SIZE* size);
 	BOOL GetWordSize(HDC hdc, Text* text, int currentpos, SIZE* size);
 	BOOL IsDelimiter(ExtendedChar chr);
+	
 private:
 	int DrawBitmap(HBITMAP hBitmap);
 	int DrawExtendedChar(ExtendedChar chr);
@@ -20,6 +21,7 @@ private:
 	int ycoord;
 	int caretPosX;
 	int caretPosY;
+	BOOL isSelected;
 	HFONT currentFont;
 	HDC hdc;
 	AllWhatYouWantController* father;

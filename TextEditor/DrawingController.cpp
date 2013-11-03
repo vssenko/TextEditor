@@ -37,32 +37,23 @@ int DrawingController::DrawBitmap(HBITMAP hBitmap)
 	 DeleteDC(hdcMem); 
 	 return 1337;
 }
-int DrawingController::PaintAll(POINT* mouseCoord, INT* position)//не только рисует, но и позицию ищет
+int DrawingController::PaintAll()
 {
-	BOOL isCaretLocated = false, isSelected = false, isSingleWord = false,isNeedToFindPosition = false;
-	if (mouseCoord != NULL && position != NULL)
-		isNeedToFindPosition = true;
+	currentFont = 0;
+	BOOL isCaretLocated = false, isSingleWord = false;
+	isSelected = false;
 	xcoord = 0;
 	ycoord = 0;
 	int maxLineY = 0;
 	PAINTSTRUCT ps;
-	hdc = BeginPaint(father->hWindow->_hwnd, &ps);
-	SetTextAlign(hdc, TA_LEFT);
-	LPRECT wndRect = new RECT();
-	currentFont = NULL;
+	std::vector<std::pair<ExtendedChar,POINT>> map;
+	father->actioncontrol->CalculateExtendCharCoordinates(&map);
+	RECT* wndRect = new RECT();
 	GetClientRect(father->hWindow->_hwnd, wndRect);
-    std::vector<ExtendedChar> extchrvector = father->text->data;
-	TEXTMETRIC tm;
-	if (extchrvector.size() > 0)
-	{
-		SelectObject(hdc,extchrvector[0].font);
-		GetTextMetrics(hdc,&tm);
-		xcoord = tm.tmInternalLeading;
-	}
-	ExtendedChar walker;	
+	std::pair<ExtendedChar,POINT> walker;
 	SIZE* elementSize = new SIZE();
-	std::vector<POINT> points;
-	for(int i= 0; i< extchrvector.size();i++)
+	hdc = BeginPaint(father->hWindow->_hwnd, &ps);
+	for(int i= 0; i< map.size();i++)
 	{
 		if (i == father->actioncontrol->currentPositionToWrite)
 		{
@@ -83,81 +74,23 @@ int DrawingController::PaintAll(POINT* mouseCoord, INT* position)//не только рис
 			isSelected = FALSE;
 			SetBkColor(hdc, RGB(255,255,255));
 		}
-		walker = extchrvector[i];
-		SetFont(walker);
-		if (isSingleWord)
-		{
-			if(GetWordSize(hdc,father->text,i,elementSize))
-			{
-				if (xcoord + elementSize->cx > wndRect->right - wndRect->left)
-				{
-					GetTextMetrics(hdc,&tm);
-					xcoord = tm.tmInternalLeading;
-					ycoord += maxLineY;
-					maxLineY = 0;
-				}
-			}
-			isSingleWord = false;
-		}
-		GetExtendedElementSize(hdc,walker,elementSize);
-		if ((xcoord + elementSize->cx) > wndRect->right - wndRect->left)
-		{
-			GetTextMetrics(hdc,&tm);
-			xcoord = tm.tmInternalLeading;
-			ycoord = ycoord + maxLineY;	
-			maxLineY = 0;
-		}
-		if (isNeedToFindPosition)
-		{
-			POINT vasya = POINT();
-			vasya.x = xcoord;
-			vasya.y = ycoord;
-			points.push_back(vasya);
-		}
-		else
-			DrawExtendedChar(walker);
-		xcoord = xcoord + elementSize->cx;
-		if (IsDelimiter(walker) )
-			isSingleWord = true;
-		maxLineY = max(maxLineY, elementSize->cy);
+		walker = map[i];
+		SetFont(walker.first);
+		xcoord = walker.second.x;
+		ycoord = walker.second.y;
+		DrawExtendedChar(walker.first);
 	}
 	if (!isCaretLocated)
 	{
-		caretPosX = xcoord;
-		caretPosY = ycoord;
+		if (map.size() != 0)
+		{
+			father->drawingcontrol->GetExtendedElementSize(hdc,map.back().first, elementSize);
+			caretPosX = xcoord + elementSize->cx;
+			caretPosY = ycoord;
+		}
 		PaintCaret();
 	}
-	if (isSelected)
-	{
-		isSelected = FALSE;
-		SetBkColor(hdc, RGB(255,255,255));
-	}
-	if (isNeedToFindPosition)
-	{
-		int mindy = 100000,  mindx = 100000;
-		for(int i = 0; i< points.size(); i++)
-		{
-			if ((points[i].y - mouseCoord->x < mindy) 
-				&&(points[i].y - mouseCoord->x>=0))
-			{
-				mindy = points[i].y - mouseCoord->x;
-			}
-		}
-		int pos = points.size();
-		for(int i = 0; i< points.size(); i++)
-		{
-			if( (points[i].y - mouseCoord->y == mindy)
-				&&(points[i].x -mouseCoord->x <mindx)
-				&&(points[i].x -mouseCoord->x >= 0))
-			{
-				pos = i;
-				mindx = points[i].x -mouseCoord->x;
-			}
-		}
-		*position = pos;
-	}
 	EndPaint(father->hWindow->_hwnd, &ps);
-	delete elementSize;
 	return 1;
 }
 int DrawingController::DrawExtendedChar(ExtendedChar chr)
@@ -196,7 +129,8 @@ int DrawingController::GetExtendedElementSize(HDC hdc, ExtendedChar chr, SIZE* s
 		return 1;
 	}
 	SIZE sz;
-	if (currentFont != chr.font)
+	HFONT font = (HFONT) GetCurrentObject(hdc,OBJ_FONT);
+	if (font != chr.font)
 	{
 		TEXTMETRIC tm;
 		HFONT prevFont = (HFONT) SelectObject(hdc,chr.font);
@@ -257,10 +191,6 @@ int DrawingController::SetFont(ExtendedChar chr)
 	{
 		SelectObject(hdc,chr.font);
 		currentFont = chr.font;
-		TEXTMETRIC tm; 
-		GetTextMetrics(hdc, &tm);
-		//int i =0;
-		//i++;
 	}
 	return 1;
 }

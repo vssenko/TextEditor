@@ -78,7 +78,6 @@ int ActionController::CalculatePosition(int x, int y)
 	pt.x = x;
 	pt.y = y;
 	int position = 0;
-	father->drawingcontrol->PaintAll(&pt,&position);
 	return position;
 }
 int ActionController::ChangeFont()
@@ -100,11 +99,75 @@ int ActionController::ChangeFont()
 		hfont = CreateFontIndirect(cf.lpLogFont);
 		currentFont = hfont;
 	}
-	father->drawingcontrol->PaintAll(NULL,NULL);
+	father->drawingcontrol->PaintAll();
 	return 1;
 }
 int ActionController::SetFocus()
 {
 	father->drawingcontrol->PaintCaret();
+	return 1;
+}
+int ActionController::CalculateExtendCharCoordinates(std::vector<std::pair<ExtendedChar,POINT>>* map)
+{
+	BOOL isCaretLocated = false, isSelected = false, isSingleWord = false,isNeedToFindPosition = false;
+	int xcoord = 0;
+	int ycoord = 0;
+	int maxLineY = 0;
+	POINT point;
+	HDC hdc = GetDC(father->hWindow->_hwnd);
+	SetTextAlign(hdc, TA_LEFT);
+	LPRECT wndRect = new RECT();
+	HFONT font = NULL;
+	GetClientRect(father->hWindow->_hwnd, wndRect);
+    std::vector<ExtendedChar> extchrvector = father->text->data;
+	TEXTMETRIC tm;
+	if (extchrvector.size() > 0)
+	{
+		SelectObject(hdc,extchrvector[0].font);
+		GetTextMetrics(hdc,&tm);
+		xcoord = tm.tmInternalLeading;
+	}
+	ExtendedChar walker;	
+	SIZE* elementSize = new SIZE();
+	std::vector<POINT> points;
+	for(int i= 0; i< extchrvector.size();i++)
+	{
+		walker = extchrvector[i];
+		if (font != walker.font)
+		{
+			SelectObject(hdc,walker.font);
+			font = walker.font;
+		}
+		if (isSingleWord)
+		{
+			if(father->drawingcontrol->GetWordSize(hdc,father->text,i,elementSize))
+			{
+				if (xcoord + elementSize->cx > wndRect->right - wndRect->left)
+				{
+					GetTextMetrics(hdc,&tm);
+					xcoord = tm.tmInternalLeading;
+					ycoord += maxLineY;
+					maxLineY = 0;
+				}
+			}
+			isSingleWord = false;
+		}
+		father->drawingcontrol->GetExtendedElementSize(hdc,walker,elementSize);
+		if ((xcoord + elementSize->cx) > wndRect->right - wndRect->left)
+		{
+			GetTextMetrics(hdc,&tm);
+			xcoord = tm.tmInternalLeading;
+			ycoord = ycoord + maxLineY;	
+			maxLineY = 0;
+		}
+		point = POINT();
+		point.x = xcoord;
+		point.y = ycoord;
+		map->push_back(std::make_pair(walker,point));
+		xcoord = xcoord + elementSize->cx;
+		if (father->drawingcontrol->IsDelimiter(walker) )
+			isSingleWord = true;
+		maxLineY = max(maxLineY, elementSize->cy);
+	}
 	return 1;
 }

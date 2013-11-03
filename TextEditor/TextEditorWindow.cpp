@@ -79,7 +79,7 @@ bool  TextEditorWindow::Create(
 //обработчики
 LRESULT TextEditorWindow::OnPaint(BaseWindow* wnd,LPARAM lparam,WPARAM wparam)
 {
-	reinterpret_cast<TextEditorWindow*>(wnd)->controller->drawingcontrol->PaintAll(NULL,NULL);
+	reinterpret_cast<TextEditorWindow*>(wnd)->controller->drawingcontrol->PaintAll();
 	return 1;
 }
 

@@ -16,6 +16,7 @@ public:
 	int CalculatePosition(int x, int y);
 	int CharPress(LPARAM lparam, WPARAM wparam);
 	int SpecialKeyPressed(WPARAM key);
+	int CalculateExtendCharCoordinates(std::vector<std::pair<ExtendedChar,POINT>>* map);
 	int MoveSelected();
 	int Select(int pos1, int pos2);
 	int IncreaseScale();
