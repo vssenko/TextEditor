@@ -11,6 +11,7 @@ public:
 	Filemanager* fileman;
 	ActionController* actioncontrol;
 	DrawingController* drawingcontrol;
-	Text *text;
+	HistoryController* historycontrol;
+	Text* text;
 	TextEditorWindow* hWindow;
 };

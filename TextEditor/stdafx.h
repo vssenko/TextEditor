@@ -28,6 +28,7 @@
 #include "DrawingController.h"
 #include "ActionController.h"
 #include "Filemanager.h"
+#include "HistoryController.h"
 #include "AllWhatYouWantController.h"
 #include "TextEditorWindow.h"
 #include "TextEditor.h"

@@ -2,14 +2,6 @@
 DrawingController::DrawingController(AllWhatYouWantController* contr)
 {
 	father = contr;
-	delimiters = std::vector<TCHAR>();
-	delimiters.push_back(' ');
-	delimiters.push_back(',');
-	delimiters.push_back('.');
-	delimiters.push_back('!');
-	delimiters.push_back('?');
-	delimiters.push_back('-');
-	delimiters.push_back(':');
 	caretPosX = 0;
 	caretPosY = 0;
 }
@@ -32,9 +24,14 @@ int DrawingController::DrawBitmap(HBITMAP hBitmap)
 	 ptOrg.x = 0; 
 	 ptOrg.y = 0; 
 	 DPtoLP(hdcMem, &ptOrg, 1); 
+	 DWORD params;
+	 if (isSelected)
+		 params = DSTINVERT;
+	 else
+		 params = SRCCOPY;
 	 BitBlt(
 	hdc, xcoord, ycoord, ptSize.x, ptSize.y, 
-	hdcMem, ptOrg.x, ptOrg.y, SRCCOPY 
+	hdcMem, ptOrg.x, ptOrg.y, params 
 	); 
 	 DeleteDC(hdcMem); 
 	 return 1337;
@@ -50,6 +47,9 @@ int DrawingController::PaintAll()
 	PAINTSTRUCT ps;
 	std::vector<std::pair<ExtendedChar,POINT>> map;
 	father->actioncontrol->CalculateExtendCharCoordinates(&map);
+	int xlastCoord , ylastCoord;//координаты конца текста
+	xlastCoord = map.back().second.x;
+	ylastCoord = map.back().second.y;
 	map.pop_back(); // удаляем последний "нулевой" символ
 	RECT* wndRect = new RECT();
 	GetClientRect(father->hWindow->_hwnd, wndRect);
@@ -87,9 +87,8 @@ int DrawingController::PaintAll()
 	{
 		if (map.size() != 0)
 		{
-			father->drawingcontrol->GetExtendedElementSize(hdc,map.back().first, elementSize);
-			caretPosX = xcoord + elementSize->cx;
-			caretPosY = ycoord;
+			caretPosX = xlastCoord;
+			caretPosY = ylastCoord;
 		}
 		PaintCaret();
 	}
@@ -120,73 +119,6 @@ int DrawingController::PaintCaret()
 	SetCaretPos(caretPosX, caretPosY);
 	ShowCaret(father->hWindow->_hwnd);
 	return 1;
-}
-int DrawingController::GetExtendedElementSize(HDC hdc, ExtendedChar chr, SIZE* size)
-{
-	if (chr.bmp != NULL)
-	{
-		BITMAP realbmp;
-		GetObject(chr.bmp, sizeof(BITMAP),(LPVOID) &realbmp); 
-		size->cx = realbmp.bmWidth;
-		size->cy = realbmp.bmHeight;
-		return 1;
-	}
-	SIZE sz;
-	HFONT font = (HFONT) GetCurrentObject(hdc,OBJ_FONT);
-	if (font != chr.font)
-	{
-		TEXTMETRIC tm;
-		HFONT prevFont = (HFONT) SelectObject(hdc,chr.font);
-		GetTextMetrics(hdc,&tm);
-		GetTextExtentPoint32(hdc,(LPCWSTR)&chr.chr,1, &sz);
-		sz.cx += tm.tmInternalLeading;
-	}
-	else
-	{
-		TEXTMETRIC tm;
-		GetTextMetrics(hdc,&tm);
-		GetTextExtentPoint32(hdc,(LPCWSTR)&chr.chr,1, &sz);
-		sz.cx += tm.tmInternalLeading;
-	}
-	size->cx = sz.cx;
-	size->cy = sz.cy;
-	return 1;
-}
-BOOL DrawingController::GetWordSize(HDC hdc, Text* text, int currentpos, SIZE* size)//меняет size, возвращает, были ли дальше разделители
-{
-	SIZE* currentSize = new SIZE();
-	size->cx = 0;
-	size-> cy = 0;
-	ExtendedChar walker;
-	BOOL isDelimiter = false;
-	for (int i = currentpos; i< text->data.size(); i++)
-	{
-		walker = text->data[i];
-		if (IsDelimiter(walker))
-		{
-			isDelimiter = true;
-			break;
-		}
-		if (walker.bmp != NULL)
-			isDelimiter = true;
-		if (isDelimiter)
-			break;
-		GetExtendedElementSize(hdc,walker,currentSize);
-		size->cx += currentSize->cx;
-		size->cy = max(size->cy,currentSize->cy);
-	}
-	return true;
-}
-BOOL DrawingController::IsDelimiter(ExtendedChar chr)
-{
-	BOOL isDelimiter = false;
-	for (int j=0; j< delimiters.size(); j++)
-		if ( chr.chr == delimiters[j])
-		{
-			isDelimiter = true;
-			break;
-		}
-	return isDelimiter;
 }
 int DrawingController::SetFont(ExtendedChar chr)
 {

@@ -34,7 +34,7 @@ int APIENTRY _tWinMain(_In_ HINSTANCE hInstance,
 	LoadString(hInstance, IDS_APP_TITLE, szTitle, MAX_LOADSTRING);
 	LoadString(hInstance, IDC_TEXTEDITOR, szWindowClass, MAX_LOADSTRING);
 	myGreatWindow->Create( hInstance, 0, szTitle, szWindowClass,
-		WS_OVERLAPPEDWINDOW, NULL,
+		WS_OVERLAPPEDWINDOW | CS_DBLCLKS, NULL,
 		CW_USEDEFAULT, 0, CW_USEDEFAULT, 0);
 
 

@@ -1,30 +1,58 @@
 #include "stdafx.h"
 
-
 ActionController::ActionController(AllWhatYouWantController* contr)
 {
 	father = contr;
 	currentPositionToWrite = 0;
 	firstSelectPosition = 0;
 	secondSelectPosition = 0;
+	isSelected = false;
 	isStartedSelect = false;
+	isMoveSelected  =false;
 	scale = 1;
-	currentFont = (HFONT) GetStockObject(DEFAULT_GUI_FONT);
+	currentFont = (HFONT) GetStockObject(ANSI_FIXED_FONT);
+	delimiters = std::vector<TCHAR>();
+	delimiters.push_back(' ');
+	delimiters.push_back(',');
+	delimiters.push_back('.');
+	delimiters.push_back('!');
+	delimiters.push_back('?');
+	delimiters.push_back('-');
+	delimiters.push_back(':');
 }
 ActionController::~ActionController(void)
 {
 }
 int ActionController::CharPress(LPARAM lparam, WPARAM wparam)
 {
-	ExtendedChar charrr =  ExtendedChar();
-	charrr.font = currentFont;
-	charrr.chr = (TCHAR) wparam;
-	father->text->data.insert(father->text->data.begin() + currentPositionToWrite, charrr);
+	father->text->AddChar((TCHAR) wparam,currentFont, currentPositionToWrite);
 	currentPositionToWrite++;
 	return 1;
 }
-int ActionController::MoveSelected()
+int ActionController::MoveSelected(int pos)
 {
+	BOOL isNeedToMove = true;
+	if ((pos>=min(firstSelectPosition,secondSelectPosition))&&
+		(pos<=max(firstSelectPosition,secondSelectPosition)))
+		isNeedToMove = false;
+	int positionToAdd = std::abs( firstSelectPosition - secondSelectPosition);
+	if (isNeedToMove)
+		father->text->Move(firstSelectPosition,secondSelectPosition,pos);
+	if (isNeedToMove)
+	{
+		currentPositionToWrite += positionToAdd;
+		currentPositionToWrite = min(currentPositionToWrite, father->text->GetSize());
+		firstSelectPosition = currentPositionToWrite;
+		secondSelectPosition = currentPositionToWrite;
+	}
+	else
+	{
+		currentPositionToWrite = max(firstSelectPosition,secondSelectPosition);
+		firstSelectPosition = currentPositionToWrite;
+		secondSelectPosition = currentPositionToWrite;
+	}
+	isMoveSelected = false;
+	InvalidateRect(father->hWindow->_hwnd,NULL,TRUE);
 	return 1;
 }
 int ActionController::Select(int pos1, int pos2)// если позиция меньше нуля, то не трогаем ее
@@ -35,6 +63,7 @@ int ActionController::Select(int pos1, int pos2)// если позиция меньше нуля, то 
 	{
 		firstSelectPosition = pos1;
 		secondSelectPosition = pos2;
+		currentPositionToWrite = pos2;
 	}
 	else
 	if (pos1>=0)
@@ -45,6 +74,7 @@ int ActionController::Select(int pos1, int pos2)// если позиция меньше нуля, то 
 	if (pos2>=0)
 	{
 		secondSelectPosition = pos2;
+		currentPositionToWrite = pos2;
 	}
 	if(firstSelectPosition !=cfp || secondSelectPosition != csp)
 		InvalidateRect(father->hWindow->_hwnd,NULL,TRUE);
@@ -82,7 +112,7 @@ int ActionController::CalculatePosition(int x, int y)//возвращает позицию!
 	CalculateExtendCharCoordinates(&map);
 	HDC hdc = GetDC(father->hWindow->_hwnd);
 	SIZE vasya = SIZE();
-	father->drawingcontrol->GetExtendedElementSize(hdc,map.back().first, &vasya);
+	father->actioncontrol->GetExtendedElementSize(hdc,map.back().first, &vasya);
 	int mindy = 10000000, mindx = 10000000;
 	int currentdelta;
 	for (int i = 0; i< map.size(); i++)
@@ -120,6 +150,7 @@ int ActionController::ChangeFont()
 	DWORD rgbPrev;
 	// Initialize CHOOSEFONT
 	ZeroMemory(&cf, sizeof(cf));
+	ZeroMemory(&lf, sizeof(lf));
 	cf.lStructSize = sizeof (cf);
 	cf.hwndOwner = father->hWindow->_hwnd;
 	cf.lpLogFont = &lf;
@@ -150,7 +181,8 @@ int ActionController::CalculateExtendCharCoordinates(std::vector<std::pair<Exten
 	LPRECT wndRect = new RECT();
 	HFONT font = NULL;
 	GetClientRect(father->hWindow->_hwnd, wndRect);
-    std::vector<ExtendedChar> extchrvector = father->text->data;
+    std::vector<ExtendedChar> extchrvector;
+	father->text->GetData(&extchrvector);
 	TEXTMETRIC tm;
 	ExtendedChar vasya = ExtendedChar();
 	vasya.chr = '\0';
@@ -175,7 +207,7 @@ int ActionController::CalculateExtendCharCoordinates(std::vector<std::pair<Exten
 		}
 		if (isSingleWord)
 		{
-			if(father->drawingcontrol->GetWordSize(hdc,father->text,i,elementSize))
+			if(father->actioncontrol->GetWordSize(hdc,father->text,i,elementSize))
 			{
 				if (xcoord + elementSize->cx > wndRect->right - wndRect->left)
 				{
@@ -187,7 +219,7 @@ int ActionController::CalculateExtendCharCoordinates(std::vector<std::pair<Exten
 			}
 			isSingleWord = false;
 		}
-		father->drawingcontrol->GetExtendedElementSize(hdc,walker,elementSize);
+		father->actioncontrol->GetExtendedElementSize(hdc,walker,elementSize);
 		if ((xcoord + elementSize->cx) > wndRect->right - wndRect->left)
 		{
 			GetTextMetrics(hdc,&tm);
@@ -200,9 +232,107 @@ int ActionController::CalculateExtendCharCoordinates(std::vector<std::pair<Exten
 		point.y = ycoord;
 		map->push_back(std::make_pair(walker,point));
 		xcoord = xcoord + elementSize->cx;
-		if (father->drawingcontrol->IsDelimiter(walker) )
+		if (father->actioncontrol->IsDelimiter(walker) )
 			isSingleWord = true;
 		maxLineY = max(maxLineY, elementSize->cy);
 	}
+	return 1;
+}
+int ActionController::SelectWord(int pos)
+{
+	std::vector<ExtendedChar> extchrvector;
+	father->text->GetData(&extchrvector);
+	BOOL gocha= false;
+	int i;
+	for ( i = pos; i >= 0; i--)
+		if (IsDelimiter(extchrvector[i]))
+		{
+			gocha = true;
+			firstSelectPosition = i + 1;
+			break;
+		}
+	if (!gocha)
+		firstSelectPosition = 0;
+		for ( i = pos; i < extchrvector.size(); i++)
+		if (IsDelimiter(extchrvector[i]))
+			break;
+	secondSelectPosition = i;
+	InvalidateRect(father->hWindow->_hwnd, NULL,TRUE);
+	return 1;
+}
+int ActionController::GetExtendedElementSize(HDC hdc, ExtendedChar chr, SIZE* size)
+{
+	if (chr.bmp != NULL)
+	{
+		BITMAP realbmp;
+		GetObject(chr.bmp, sizeof(BITMAP),(LPVOID) &realbmp); 
+		size->cx = realbmp.bmWidth;
+		size->cy = realbmp.bmHeight;
+		return 1;
+	}
+	SIZE sz;
+	HFONT font = (HFONT) GetCurrentObject(hdc,OBJ_FONT);
+	if (font != chr.font)
+	{
+		TEXTMETRIC tm;
+		HFONT prevFont = (HFONT) SelectObject(hdc,chr.font);
+		GetTextMetrics(hdc,&tm);
+		GetTextExtentPoint32(hdc,(LPCWSTR)&chr.chr,1, &sz);
+		sz.cx += tm.tmInternalLeading;
+	}
+	else
+	{
+		TEXTMETRIC tm;
+		GetTextMetrics(hdc,&tm);
+		GetTextExtentPoint32(hdc,(LPCWSTR)&chr.chr,1, &sz);
+		sz.cx += tm.tmInternalLeading;
+	}
+	size->cx = sz.cx;
+	size->cy = sz.cy;
+	return 1;
+}
+int ActionController::GetWordSize(HDC hdc, Text* text, int currentpos, SIZE* size)//меняет size, возвращает, были ли дальше разделители
+{
+	SIZE* currentSize = new SIZE();
+	size->cx = 0;
+	size-> cy = 0;
+	ExtendedChar walker;
+	BOOL isDelimiter = false;
+	std::vector<ExtendedChar> extchrvectr;
+	father->text->GetData(&extchrvectr);
+	for (int i = currentpos; i< extchrvectr.size(); i++)
+	{
+		walker = extchrvectr[i];
+		if (IsDelimiter(walker))
+		{
+			isDelimiter = true;
+			break;
+		}
+		if (walker.bmp != NULL)
+			isDelimiter = true;
+		if (isDelimiter)
+			break;
+		GetExtendedElementSize(hdc,walker,currentSize);
+		size->cx += currentSize->cx;
+		size->cy = max(size->cy,currentSize->cy);
+	}
+	return 1;
+}
+BOOL ActionController::IsDelimiter(ExtendedChar chr)
+{
+	BOOL isDelimiter = false;
+	for (int j=0; j< delimiters.size(); j++)
+		if ( chr.chr == delimiters[j])
+		{
+			isDelimiter = true;
+			break;
+		}
+	return isDelimiter;
+}
+int ActionController::DeleteSelected()
+{
+	if (firstSelectPosition!= secondSelectPosition)
+		father->text->DeleteSymbol(firstSelectPosition,secondSelectPosition);
+	currentPositionToWrite = min(firstSelectPosition,secondSelectPosition);
 	return 1;
 }

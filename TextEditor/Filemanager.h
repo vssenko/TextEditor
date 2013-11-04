@@ -13,5 +13,12 @@ public:
 	  int NewFile();
 private:
 	AllWhatYouWantController* father;
+	class FileObject
+	{
+	public:
+		FileObject();
+		std::vector<std::pair<HFONT,LOGFONT>> fonts;
+		std::vector<std::pair<HBITMAP,BITMAP>> bitmaps;
+		std::vector<ExtendedChar> faketext;
+	};
 };
-

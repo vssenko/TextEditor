@@ -21,12 +21,11 @@ TextEditorWindow::TextEditorWindow(void)
 	AddMessage(WM_MOUSEMOVE, &TextEditorWindow::OnMouseMove);
 	AddMessage(WM_SETFOCUS, &TextEditorWindow::OnSetFocus);
 	AddMessage(WM_KILLFOCUS, &TextEditorWindow::OnKillFocus);
+	AddMessage(WM_LBUTTONDBLCLK, &TextEditorWindow::OnMouseDoubleClick);
 }
-
 TextEditorWindow::~TextEditorWindow(void)
 {
 }
-
 //Создание
 bool  TextEditorWindow::Create(
 	HINSTANCE hInstance,
@@ -41,7 +40,7 @@ bool  TextEditorWindow::Create(
 
 	WNDCLASSEX wcex;
 	wcex.cbSize = sizeof(WNDCLASSEX);
-	wcex.style			= CS_HREDRAW | CS_VREDRAW;
+	wcex.style			= CS_HREDRAW | CS_VREDRAW | CS_DBLCLKS;
 	wcex.cbClsExtra		= 0;
 	wcex.cbWndExtra		= 0;
 	wcex.hInstance		= hInstance;
@@ -82,20 +81,17 @@ LRESULT TextEditorWindow::OnPaint(BaseWindow* wnd,LPARAM lparam,WPARAM wparam)
 	reinterpret_cast<TextEditorWindow*>(wnd)->controller->drawingcontrol->PaintAll();
 	return 1;
 }
-
 LRESULT TextEditorWindow::OnCharPress(BaseWindow* wnd,LPARAM lparam,WPARAM wparam)
 {
 	reinterpret_cast<TextEditorWindow*>(wnd)->controller->actioncontrol->CharPress(lparam, wparam);
 	InvalidateRect(wnd -> _hwnd, NULL, TRUE);
 	return 0;
 }
-
 LRESULT TextEditorWindow::OnDestroy(BaseWindow* wnd,LPARAM lparam,WPARAM wparam)
 {
 	PostQuitMessage(0);
 	return 0;
 }
-
 LRESULT TextEditorWindow::OnMenuCommand(BaseWindow* wnd,LPARAM lparam,WPARAM wparam)
 {
 	switch (LOWORD(wparam))
@@ -130,20 +126,25 @@ LRESULT TextEditorWindow::OnMenuCommand(BaseWindow* wnd,LPARAM lparam,WPARAM wpa
 	}
 	return 0;
 }
-
 LRESULT TextEditorWindow::OnSizeMove(BaseWindow* wnd,LPARAM lparam,WPARAM wparam)
 {
 	return 1;
 }
-
 LRESULT TextEditorWindow::OnMouseDown(BaseWindow* wnd,LPARAM lparam,WPARAM wparam)
 {
 	int positionpressed = reinterpret_cast<TextEditorWindow*>(wnd)->controller->actioncontrol->CalculatePosition(GET_X_LPARAM(lparam), GET_Y_LPARAM(lparam));
-	reinterpret_cast<TextEditorWindow*>(wnd)->controller->actioncontrol->Select(positionpressed, positionpressed);
-	reinterpret_cast<TextEditorWindow*>(wnd)->controller->actioncontrol->isStartedSelect = true;
+	if (positionpressed >= reinterpret_cast<TextEditorWindow*>(wnd)->controller->actioncontrol->firstSelectPosition &&
+		positionpressed < reinterpret_cast<TextEditorWindow*>(wnd)->controller->actioncontrol->secondSelectPosition)
+	{
+		reinterpret_cast<TextEditorWindow*>(wnd)->controller->actioncontrol->isMoveSelected = true;
+	}
+	else
+	{
+		reinterpret_cast<TextEditorWindow*>(wnd)->controller->actioncontrol->Select(positionpressed, positionpressed);
+		reinterpret_cast<TextEditorWindow*>(wnd)->controller->actioncontrol->isStartedSelect = true;
+	}
 	return 1;
 }
-
 LRESULT TextEditorWindow::OnMouseMove(BaseWindow* wnd,LPARAM lparam,WPARAM wparam)
 {
 	if (reinterpret_cast<TextEditorWindow*>(wnd)->controller->actioncontrol->isStartedSelect)
@@ -151,25 +152,45 @@ LRESULT TextEditorWindow::OnMouseMove(BaseWindow* wnd,LPARAM lparam,WPARAM wpara
 		int positionpressed = reinterpret_cast<TextEditorWindow*>(wnd)->controller->actioncontrol->CalculatePosition(GET_X_LPARAM(lparam), GET_Y_LPARAM(lparam));
 		reinterpret_cast<TextEditorWindow*>(wnd)->controller->actioncontrol->Select( -1 , positionpressed);
 	}
+	else
+		if (reinterpret_cast<TextEditorWindow*>(wnd)->controller->actioncontrol->isMoveSelected)
+		{
+			//int positionpressed = reinterpret_cast<TextEditorWindow*>(wnd)->controller->actioncontrol->CalculatePosition(GET_X_LPARAM(lparam), GET_Y_LPARAM(lparam));
+			//reinterpret_cast<TextEditorWindow*>(wnd)->controller->actioncontrol->currentPositionToWrite = positionpressed;
+		}
 	return 1;
 }
-
 LRESULT TextEditorWindow::OnMouseUp(BaseWindow* wnd,LPARAM lparam,WPARAM wparam)
 {
-	int positionpressed = reinterpret_cast<TextEditorWindow*>(wnd)->controller->actioncontrol->CalculatePosition(GET_X_LPARAM(lparam), GET_Y_LPARAM(lparam));
-	reinterpret_cast<TextEditorWindow*>(wnd)->controller->actioncontrol->Select( -1 , positionpressed);
-	reinterpret_cast<TextEditorWindow*>(wnd)->controller->actioncontrol->isStartedSelect = false;
+	if (reinterpret_cast<TextEditorWindow*>(wnd)->controller->actioncontrol->isStartedSelect)
+	{
+		int positionpressed = reinterpret_cast<TextEditorWindow*>(wnd)->controller->actioncontrol->CalculatePosition(GET_X_LPARAM(lparam), GET_Y_LPARAM(lparam));
+		reinterpret_cast<TextEditorWindow*>(wnd)->controller->actioncontrol->Select( -1 , positionpressed);
+		reinterpret_cast<TextEditorWindow*>(wnd)->controller->actioncontrol->isStartedSelect = false;
+	}
+	else
+		if(reinterpret_cast<TextEditorWindow*>(wnd)->controller->actioncontrol->isMoveSelected)
+		{
+			int positionpressed = reinterpret_cast<TextEditorWindow*>(wnd)->controller->actioncontrol->CalculatePosition(GET_X_LPARAM(lparam), GET_Y_LPARAM(lparam));
+			reinterpret_cast<TextEditorWindow*>(wnd)->controller->actioncontrol->MoveSelected(positionpressed);
+		}
 	return 1;
 }
-
 LRESULT TextEditorWindow::OnSetFocus(BaseWindow* wnd,LPARAM lparam,WPARAM wparam)
 {
 	reinterpret_cast<TextEditorWindow*>(wnd)->controller->actioncontrol->SetFocus();
 	return 1;
 }
-
 LRESULT TextEditorWindow::OnKillFocus(BaseWindow* wnd,LPARAM lparam,WPARAM wparam)
 {
-
+	DestroyCaret();
+	return 1;
+}
+LRESULT TextEditorWindow::OnMouseDoubleClick(BaseWindow* wnd,LPARAM lparam,WPARAM wparam)
+{
+	int position = reinterpret_cast<TextEditorWindow*>(wnd)->controller->actioncontrol->CalculatePosition(GET_X_LPARAM(lparam), GET_Y_LPARAM(lparam));
+	reinterpret_cast<TextEditorWindow*>(wnd)->controller->actioncontrol->isStartedSelect = false;
+	reinterpret_cast<TextEditorWindow*>(wnd)->controller->actioncontrol->isMoveSelected = false;
+	reinterpret_cast<TextEditorWindow*>(wnd)->controller->actioncontrol->SelectWord(position);
 	return 1;
 }
