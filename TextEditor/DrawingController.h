@@ -1,7 +1,7 @@
 #pragma once
 #include "stdafx.h"
 class AllWhatYouWantController;
-class DrawingController
+class DrawingController: public BaseController
 {
 public:
 	DrawingController(AllWhatYouWantController* contr);
@@ -20,5 +20,4 @@ private:
 	BOOL isSelected;
 	HFONT currentFont;
 	HDC hdc;
-	AllWhatYouWantController* father;
 };

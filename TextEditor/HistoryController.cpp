@@ -7,15 +7,13 @@ HistoryController::HistoryController(AllWhatYouWantController* contr)
 	father = contr;
 	maxStates = 15;
 }
-
-
 HistoryController::~HistoryController(void)
 {
 }
-
 int HistoryController::AddState()
 {
 	states.push_back(*father->text);
+	oldStates.clear();
 	return 1;
 }
 int HistoryController::Repeal()
@@ -43,4 +41,10 @@ int HistoryController::RepealOfRepeal()
 		return 1;
 	}
 	return 0;
+}
+int HistoryController::ClearHistory()
+{
+	states = std::vector<Text>();
+	oldStates = std::vector<Text>();
+	return 1;
 }

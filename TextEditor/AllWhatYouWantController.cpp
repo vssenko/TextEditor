@@ -8,6 +8,7 @@ AllWhatYouWantController::AllWhatYouWantController(TextEditorWindow* window)
 	actioncontrol = new ActionController(this);
 	drawingcontrol = new DrawingController(this);
 	historycontrol = new HistoryController(this);
+	scalingcontrol = new ScalingController(this);
 	fileman = new Filemanager(this);
 	text = new Text(this);
 	historycontrol->AddState();

@@ -12,6 +12,7 @@ public:
 	ActionController* actioncontrol;
 	DrawingController* drawingcontrol;
 	HistoryController* historycontrol;
+	ScalingController* scalingcontrol;
 	Text* text;
 	TextEditorWindow* hWindow;
 };

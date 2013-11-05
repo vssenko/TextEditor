@@ -3,7 +3,7 @@
 
 #include "stdafx.h"
 class AllWhatYouWantController;
-class HistoryController
+class HistoryController: public BaseController
 {
 public:
 	HistoryController(AllWhatYouWantController* contr);
@@ -11,12 +11,11 @@ public:
 	int AddState();
 	int Repeal();
 	int RepealOfRepeal(); // ^_^
-	
+	int ClearHistory();
 private:
 	int maxStates;
 	int currentState;
 	std::vector<Text> states;
 	std::vector<Text> oldStates;
-	AllWhatYouWantController* father;
 };
 

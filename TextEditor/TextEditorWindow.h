@@ -31,6 +31,7 @@ protected:
 	static LRESULT OnSetFocus(BaseWindow* wnd,LPARAM lparam,WPARAM wparam); 
 	static LRESULT OnKillFocus(BaseWindow* wnd,LPARAM lparam,WPARAM wparam); 
 	static LRESULT OnMouseDoubleClick(BaseWindow* wnd,LPARAM lparam,WPARAM wparam); 
+	static LRESULT OnMouseWheel(BaseWindow* wnd,LPARAM lparam,WPARAM wparam); 
 	//обработчики выше
 };
 

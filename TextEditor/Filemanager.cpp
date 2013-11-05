@@ -24,7 +24,7 @@ int Filemanager::LoadMyImage()
 	if (GetOpenFileName(&openFileStruct))
 	{
 		int pos = father->actioncontrol->currentPositionToWrite;
-		father->text->AddBitmap((HBITMAP) LoadImage( NULL, openFileStruct.lpstrFile, IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE),pos);
+		father->text->AddBitmap((HBITMAP) LoadImage( NULL, openFileStruct.lpstrFile, IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE),pos, TRUE);
 		return 1;
 	}
 	else
@@ -55,7 +55,7 @@ int Filemanager::SaveFile()
 			isExistObject = false;
 			walker = extchrvectr[i];
 			for (int j = 0; j < saveFileObject.fonts.size(); j++)
-				if( walker.font == saveFileObject.fonts[i].first)
+				if( walker.font == saveFileObject.fonts[j].first)
 					isExistObject = true;
 			if (!isExistObject)
 			{
@@ -65,9 +65,9 @@ int Filemanager::SaveFile()
 			}
 			isExistObject = false;
 			for (int j = 0; j < saveFileObject.bitmaps.size(); j++)
-				if( walker.bmp == saveFileObject.bitmaps[i].first)
+				if( walker.bmp == saveFileObject.bitmaps[j].first)
 					isExistObject = true;
-			if (!isExistObject)
+			if ((walker.bmp!= NULL)&&(!isExistObject))
 			{
 				BITMAP bmp = BITMAP();
 				GetObject(walker.bmp,sizeof(BITMAP), &bmp);
@@ -89,14 +89,15 @@ int Filemanager::SaveFile()
 			WriteFile(file,&saveFileObject.fonts[i], sizeof(std::pair<HFONT,LOGFONT>),&written,NULL);
 		for (int i = 0; i< countOfBitmaps; i++)//записываем битмапы
 			WriteFile(file,&saveFileObject.bitmaps[i], sizeof(std::pair<HBITMAP,BITMAP>),&written,NULL);
+		CloseHandle(file);
 		return 1;
     }
 	return 0;
 }
 int Filemanager::NewFile()
 {
-	delete father->text;
-	father->text = new Text(father);
+	std::vector<ExtendedChar> vctr = std::vector<ExtendedChar>();
+	father->text->SetNewData(vctr);
 	return 1;
 }
 int Filemanager::LoadFile()
@@ -139,13 +140,13 @@ int Filemanager::LoadFile()
 			openfileObject.fonts.push_back(fontbuffer);
 		}
 		std::pair<HBITMAP,BITMAP> bmpbuffer;
-		for(int i = 0; i < countOfChars; i++)
+		for(int i = 0; i < countOfBitmaps; i++)
 		{
 			ReadFile(file,&countOfBitmaps,sizeof(std::pair<HBITMAP,BITMAP>),&readBytes,NULL);
 			openfileObject.bitmaps.push_back(bmpbuffer);
 		}
 		//все, объект готов. Осталось превратить его в Text.
-		Text newText = Text(father);//привязываем к текущему главному контроллеру
+		Text newText = Text(NULL);
 		std::map<HFONT,HFONT> oldToNewFontsMap = std::map<HFONT,HFONT>();
 		for (int i = 0; i < openfileObject.fonts.size(); i++)
 		{
@@ -154,7 +155,7 @@ int Filemanager::LoadFile()
 		}
 		std::map<HBITMAP,HBITMAP> oldToNewBitmapMap = std::map<HBITMAP,HBITMAP>();
 		for (int i = 0; i < openfileObject.bitmaps.size(); i++)
-		{
+		{ 
 			HBITMAP newHBitmap = CreateBitmapIndirect(&openfileObject.bitmaps[i].second);
 		    
 			oldToNewBitmapMap[openfileObject.bitmaps[i].first] = newHBitmap;
@@ -165,16 +166,18 @@ int Filemanager::LoadFile()
 			walker = openfileObject.faketext[i];
 			if (walker.bmp != NULL)
 			{
-				newText.AddBitmap(oldToNewBitmapMap[walker.bmp],i);
+				newText.AddBitmap(oldToNewBitmapMap[walker.bmp],i, FALSE);
 			}
 			else
 			{
 				newText.AddChar(walker.chr,
-					oldToNewFontsMap[walker.font],i);
+					oldToNewFontsMap[walker.font],i, FALSE);
 			}
 		}//новый текст готов!
-		delete father->text;
-		father->text = &newText;//ура!
+		std::vector<ExtendedChar> chrvctr;
+		newText.GetData(&chrvctr);
+		father->text->SetNewData(chrvctr);
+		CloseHandle(file);
 		return 1;
 	}
 	return 0;

@@ -30,9 +30,10 @@ int DrawingController::DrawBitmap(HBITMAP hBitmap)
 	 else
 		 params = SRCCOPY;
 	 BitBlt(
-	hdc, xcoord, ycoord, ptSize.x, ptSize.y, 
+		 hdc, xcoord, ycoord, ptSize.x * father->scalingcontrol->scale, ptSize.y * father->scalingcontrol->scale, 
 	hdcMem, ptOrg.x, ptOrg.y, params 
 	); 
+	//StretchBlt(hdc,xcoord,ycoord, ptSize.x * scaleRatio, ptSize.y * scaleRatio, hdcMem, 0, 0, image->GetWidth(), image->GetHeight(), SRCCOPY);
 	 DeleteDC(hdcMem); 
 	 return 1337;
 }
@@ -56,8 +57,13 @@ int DrawingController::PaintAll()
 	std::pair<ExtendedChar,POINT> walker;
 	SIZE* elementSize = new SIZE();
 	hdc = BeginPaint(father->hWindow->_hwnd, &ps);
+	SetTextAlign(hdc, TA_LEFT | TA_TOP);
 	for(int i= 0; i< map.size();i++)
 	{
+		walker = map[i];
+		SetFont(walker.first);
+		xcoord = walker.second.x;
+		ycoord = walker.second.y;
 		if (i == father->actioncontrol->currentPositionToWrite)
 		{
 			isCaretLocated = true;
@@ -77,10 +83,6 @@ int DrawingController::PaintAll()
 			isSelected = FALSE;
 			SetBkColor(hdc, RGB(255,255,255));
 		}
-		walker = map[i];
-		SetFont(walker.first);
-		xcoord = walker.second.x;
-		ycoord = walker.second.y;
 		DrawExtendedChar(walker.first);
 	}
 	if (!isCaretLocated)
@@ -113,18 +115,20 @@ int DrawingController::PaintCaret()
 {
 	DestroyCaret();
 	TEXTMETRIC tm;
-	SelectObject(hdc, father->actioncontrol->currentFont);
+	HFONT oldFont = (HFONT)SelectObject(hdc,
+		father->scalingcontrol->ScaledFont(father->actioncontrol->currentFont));
 	GetTextMetrics(hdc,&tm);
 	CreateCaret(father->hWindow->_hwnd,NULL,1, tm.tmHeight);
 	SetCaretPos(caretPosX, caretPosY);
 	ShowCaret(father->hWindow->_hwnd);
+	SelectObject(hdc, oldFont);
 	return 1;
 }
 int DrawingController::SetFont(ExtendedChar chr)
 {
 	if (currentFont != chr.font)
 	{
-		SelectObject(hdc,chr.font);
+		SelectObject(hdc,father->scalingcontrol->ScaledFont(chr.font));
 		currentFont = chr.font;
 	}
 	return 1;

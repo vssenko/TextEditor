@@ -23,10 +23,12 @@
 #include <Windowsx.h>
 // TODO: Установите здесь ссылки на дополнительные заголовки, требующиеся для программы
 #include "ExtendedChar.h"
-#include "Text.h"
 #include "BaseWindow.h"
+#include "BaseController.h"
+#include "Text.h"
 #include "DrawingController.h"
 #include "ActionController.h"
+#include "ScalingController.h"
 #include "Filemanager.h"
 #include "HistoryController.h"
 #include "AllWhatYouWantController.h"

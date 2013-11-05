@@ -2,7 +2,7 @@
 #pragma once
 #include "stdafx.h"
 class AllWhatYouWantController;
- class Filemanager
+ class Filemanager: public BaseController
 {
 public:
 	Filemanager(AllWhatYouWantController* controller);
@@ -12,7 +12,6 @@ public:
 	  int LoadFile();
 	  int NewFile();
 private:
-	AllWhatYouWantController* father;
 	class FileObject
 	{
 	public:

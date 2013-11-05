@@ -9,8 +9,7 @@ ActionController::ActionController(AllWhatYouWantController* contr)
 	isSelected = false;
 	isStartedSelect = false;
 	isMoveSelected  =false;
-	scale = 1;
-	currentFont = (HFONT) GetStockObject(ANSI_FIXED_FONT);
+	currentFont = (HFONT) GetStockObject(DEFAULT_GUI_FONT);
 	delimiters = std::vector<TCHAR>();
 	delimiters.push_back(' ');
 	delimiters.push_back(',');
@@ -25,7 +24,7 @@ ActionController::~ActionController(void)
 }
 int ActionController::CharPress(LPARAM lparam, WPARAM wparam)
 {
-	father->text->AddChar((TCHAR) wparam,currentFont, currentPositionToWrite);
+	father->text->AddChar((TCHAR) wparam,currentFont, currentPositionToWrite,TRUE);
 	currentPositionToWrite++;
 	return 1;
 }
@@ -37,7 +36,7 @@ int ActionController::MoveSelected(int pos)
 		isNeedToMove = false;
 	int positionToAdd = std::abs( firstSelectPosition - secondSelectPosition);
 	if (isNeedToMove)
-		father->text->Move(firstSelectPosition,secondSelectPosition,pos);
+		father->text->Move(firstSelectPosition,secondSelectPosition,pos,TRUE);
 	if (isNeedToMove)
 	{
 		currentPositionToWrite += positionToAdd;
@@ -80,29 +79,11 @@ int ActionController::Select(int pos1, int pos2)// если позиция меньше нуля, то 
 		InvalidateRect(father->hWindow->_hwnd,NULL,TRUE);
 	return 1;
 }
-int ActionController::IncreaseScale()
-{
-	scale = scale +0.1;
-	if (scale > 2)
-	{
-		scale = 2;
-	}
-	return 1;
-}
-int ActionController::DecreaseScale()
-{
-	scale = scale - 0.1;
-	if (scale < 0.5)
-	{
-		scale = 0.5;
-	}
-	return 1;
-}
 int ActionController::SpecialKeyPressed(WPARAM key)
 {
 	return 1;
 }
-int ActionController::CalculatePosition(int x, int y)//возвращает позицию!
+int ActionController::CalculatePosition(int x, int y)///*возвращает позицию!*////
 {
 	POINT pt = POINT();
 	pt.x = x;
@@ -161,12 +142,15 @@ int ActionController::ChangeFont()
 		hfont = CreateFontIndirect(cf.lpLogFont);
 		currentFont = hfont;
 	}
-	father->drawingcontrol->PaintAll();
+	if (firstSelectPosition != secondSelectPosition)
+		father->text->ChangeFont(min(firstSelectPosition,secondSelectPosition),
+								 max(firstSelectPosition,secondSelectPosition),currentFont);
+	InvalidateRect(father->hWindow->_hwnd, NULL, TRUE);
 	return 1;
 }
 int ActionController::SetFocus()
 {
-	InvalidateRect(father->hWindow->_hwnd, NULL,TRUE);
+	//InvalidateRect(father->hWindow->_hwnd, NULL,TRUE);
 	return 1;
 }
 int ActionController::CalculateExtendCharCoordinates(std::vector<std::pair<ExtendedChar,POINT>>* map)
@@ -176,6 +160,7 @@ int ActionController::CalculateExtendCharCoordinates(std::vector<std::pair<Exten
 	int ycoord = 0;
 	int maxLineY = 0;
 	POINT point;
+	ABC abc;
 	HDC hdc = GetDC(father->hWindow->_hwnd);
 	SetTextAlign(hdc, TA_LEFT);
 	LPRECT wndRect = new RECT();
@@ -188,31 +173,32 @@ int ActionController::CalculateExtendCharCoordinates(std::vector<std::pair<Exten
 	vasya.chr = '\0';
 	vasya.font = currentFont;
 	extchrvector.push_back(vasya);
-	if (extchrvector.size() > 0)
-	{
-		SelectObject(hdc,extchrvector[0].font);
-		GetTextMetrics(hdc,&tm);
-		xcoord = tm.tmInternalLeading;
-	}
-	ExtendedChar walker;	
+	ExtendedChar walker;
 	SIZE* elementSize = new SIZE();
 	std::vector<POINT> points;
+	BOOL isOffsetLeft = false;
 	for(int i= 0; i< extchrvector.size();i++)
 	{
 		walker = extchrvector[i];
 		if (font != walker.font)
 		{
-			SelectObject(hdc,walker.font);
+			SelectObject(hdc,father->scalingcontrol->ScaledFont(walker.font));
 			font = walker.font;
 		}
+		GetCharABCWidths(hdc, extchrvector[i].chr,extchrvector[i].chr,&abc);
+		isOffsetLeft = (abc.abcA < 0);	
+		if (isOffsetLeft)
+			xcoord -= abc.abcA;
 		if (isSingleWord)
 		{
 			if(father->actioncontrol->GetWordSize(hdc,father->text,i,elementSize))
 			{
 				if (xcoord + elementSize->cx > wndRect->right - wndRect->left)
 				{
-					GetTextMetrics(hdc,&tm);
-					xcoord = tm.tmInternalLeading;
+					if (isOffsetLeft)
+						xcoord = -abc.abcA;
+					else
+						xcoord = 0;
 					ycoord += maxLineY;
 					maxLineY = 0;
 				}
@@ -222,8 +208,10 @@ int ActionController::CalculateExtendCharCoordinates(std::vector<std::pair<Exten
 		father->actioncontrol->GetExtendedElementSize(hdc,walker,elementSize);
 		if ((xcoord + elementSize->cx) > wndRect->right - wndRect->left)
 		{
-			GetTextMetrics(hdc,&tm);
-			xcoord = tm.tmInternalLeading;
+			if (isOffsetLeft)
+				xcoord = -abc.abcA;
+			else
+				xcoord = 0;
 			ycoord = ycoord + maxLineY;	
 			maxLineY = 0;
 		}
@@ -231,7 +219,9 @@ int ActionController::CalculateExtendCharCoordinates(std::vector<std::pair<Exten
 		point.x = xcoord;
 		point.y = ycoord;
 		map->push_back(std::make_pair(walker,point));
-		xcoord = xcoord + elementSize->cx;
+		xcoord = xcoord + elementSize->cx +1;
+		if (isOffsetLeft)
+			xcoord = xcoord + abc.abcA; //прибавляем отрицат. значение
 		if (father->actioncontrol->IsDelimiter(walker) )
 			isSingleWord = true;
 		maxLineY = max(maxLineY, elementSize->cy);
@@ -272,23 +262,23 @@ int ActionController::GetExtendedElementSize(HDC hdc, ExtendedChar chr, SIZE* si
 	}
 	SIZE sz;
 	HFONT font = (HFONT) GetCurrentObject(hdc,OBJ_FONT);
-	if (font != chr.font)
+	HFONT prevFont;
+	BOOL ggwp = false;
+	if (font != father->scalingcontrol->ScaledFont(chr.font))
 	{
-		TEXTMETRIC tm;
-		HFONT prevFont = (HFONT) SelectObject(hdc,chr.font);
-		GetTextMetrics(hdc,&tm);
-		GetTextExtentPoint32(hdc,(LPCWSTR)&chr.chr,1, &sz);
-		sz.cx += tm.tmInternalLeading;
+		prevFont = (HFONT) SelectObject(hdc,father->scalingcontrol->ScaledFont(chr.font));
+		ggwp = true;
 	}
-	else
-	{
-		TEXTMETRIC tm;
-		GetTextMetrics(hdc,&tm);
-		GetTextExtentPoint32(hdc,(LPCWSTR)&chr.chr,1, &sz);
-		sz.cx += tm.tmInternalLeading;
-	}
+	GetTextExtentPoint32(hdc,(LPCWSTR)&chr.chr,1, &sz);
+	ABC abc;
+	GetCharABCWidths(hdc,chr.chr,chr.chr,&abc);
+	sz.cx =abc.abcB + abs(abc.abcC);
+	if (abc.abcA > 0)
+		sz.cx += abc.abcA;
 	size->cx = sz.cx;
 	size->cy = sz.cy;
+	if (ggwp)
+		SelectObject(hdc, prevFont);
 	return 1;
 }
 int ActionController::GetWordSize(HDC hdc, Text* text, int currentpos, SIZE* size)//меняет size, возвращает, были ли дальше разделители

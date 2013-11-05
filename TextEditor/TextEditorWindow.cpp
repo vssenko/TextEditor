@@ -22,6 +22,7 @@ TextEditorWindow::TextEditorWindow(void)
 	AddMessage(WM_SETFOCUS, &TextEditorWindow::OnSetFocus);
 	AddMessage(WM_KILLFOCUS, &TextEditorWindow::OnKillFocus);
 	AddMessage(WM_LBUTTONDBLCLK, &TextEditorWindow::OnMouseDoubleClick);
+	AddMessage(WM_MOUSEWHEEL, &TextEditorWindow::OnMouseWheel);
 }
 TextEditorWindow::~TextEditorWindow(void)
 {
@@ -192,5 +193,16 @@ LRESULT TextEditorWindow::OnMouseDoubleClick(BaseWindow* wnd,LPARAM lparam,WPARA
 	reinterpret_cast<TextEditorWindow*>(wnd)->controller->actioncontrol->isStartedSelect = false;
 	reinterpret_cast<TextEditorWindow*>(wnd)->controller->actioncontrol->isMoveSelected = false;
 	reinterpret_cast<TextEditorWindow*>(wnd)->controller->actioncontrol->SelectWord(position);
+	return 1;
+}
+LRESULT TextEditorWindow::OnMouseWheel(BaseWindow* wnd,LPARAM lparam,WPARAM wparam)
+{
+	if (GET_KEYSTATE_WPARAM(wparam) == MK_CONTROL)
+	{
+		if (GET_WHEEL_DELTA_WPARAM(wparam) > 0 )
+			reinterpret_cast<TextEditorWindow*>(wnd)->controller->scalingcontrol->IncreaseScale();
+		else
+			reinterpret_cast<TextEditorWindow*>(wnd)->controller->scalingcontrol->DecreaseScale();
+	}
 	return 1;
 }

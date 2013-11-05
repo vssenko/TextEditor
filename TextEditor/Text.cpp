@@ -8,34 +8,38 @@ Text::Text(AllWhatYouWantController* contr)
 Text::~Text(void)
 {
 }
-int Text::AddChar(TCHAR chr, HFONT font, int pos)
+int Text::AddChar(TCHAR chr, HFONT font, int pos,BOOL toHistory)
 {
 	ExtendedChar extchr = ExtendedChar();
 	extchr.chr = chr;
 	extchr.font = font;
 	data.insert(data.begin() + pos, extchr);
-	father->historycontrol->AddState();
+	if (toHistory)
+		father->historycontrol->AddState();
 	return 1;
 }
-int Text:: AddBitmap(HBITMAP bitmap, int pos)
+int Text::AddBitmap(HBITMAP bitmap, int pos,BOOL toHistory)
 {
 	if (bitmap ==NULL)
 		return 0;
 	ExtendedChar bitmpchar =ExtendedChar();
 	bitmpchar.bmp = bitmap;
 	this->data.insert(data.begin() + pos, bitmpchar);
+	if (toHistory)
 	father->historycontrol->AddState();
 	return 1;
 }
-int Text::DeleteSymbol(int pos)
+int Text::DeleteSymbol(int pos,BOOL toHistory)
 {
 	data.erase(data.begin() + pos);
+	if (toHistory)
 	father->historycontrol->AddState();
 	return 1;
 }
-int Text::DeleteSymbol(int pos1,int pos2)
+int Text::DeleteSymbol(int pos1,int pos2,BOOL toHistory)
 {
 	data.erase(data.begin() + min(pos1,pos2),data.begin() + max(pos1,pos2));
+	if (toHistory)
 	father->historycontrol->AddState();
 	return 1;
 }
@@ -44,7 +48,7 @@ int Text::GetData(std::vector<ExtendedChar>* vectr)
 	*vectr = data;
 	return 1;
 }
-int Text::AddVectorExtendedChar(std::vector<ExtendedChar> vctr, int pos)
+int Text::AddVectorExtendedChar(std::vector<ExtendedChar> vctr, int pos,BOOL toHistory)
 {
 	for(int i = 0; i < vctr.size(); i++)
 	{
@@ -52,9 +56,11 @@ int Text::AddVectorExtendedChar(std::vector<ExtendedChar> vctr, int pos)
 		data.insert(data.begin() + pos, chr);
 		pos++;
 	}
+	if (toHistory)
+	father->historycontrol->AddState();
 	return 1;
 }
-int Text::Move(int firstPos,int secondPos, int positionToMove)
+int Text::Move(int firstPos,int secondPos, int positionToMove,BOOL toHistory)
 {
 	if ((positionToMove >= min(firstPos,secondPos)) && (positionToMove <= max(firstPos,secondPos)))
 		return 1;
@@ -66,17 +72,36 @@ int Text::Move(int firstPos,int secondPos, int positionToMove)
 	if (positionToMove <= max(firstPos,secondPos))
 	{
 		data.erase(data.begin() + min(firstPos,secondPos),data.begin() + max(firstPos,secondPos));
-		father->text->AddVectorExtendedChar(tmpvect,positionToMove);
+		father->text->AddVectorExtendedChar(tmpvect,positionToMove,FALSE);
 	}
 	else
 	{
-		father->text->AddVectorExtendedChar(tmpvect,positionToMove);
+		father->text->AddVectorExtendedChar(tmpvect,positionToMove,FALSE);
 		data.erase(data.begin() + min(firstPos,secondPos),data.begin() + max(firstPos,secondPos));
 	}
+	if (toHistory)
 	father->historycontrol->AddState();
 	return 1;
 }
 int Text::GetSize()
 {
 	return data.size();
+}
+int Text::SetNewData(std::vector<ExtendedChar> chrvctr)
+{
+	data = chrvctr;
+	father->historycontrol->ClearHistory();
+	father->actioncontrol->currentPositionToWrite = data.size();
+	father->actioncontrol->firstSelectPosition = data.size();
+	father->actioncontrol->secondSelectPosition = data.size();
+	InvalidateRect(father->hWindow->_hwnd, NULL,TRUE);
+	return 1;
+}
+int Text::ChangeFont(int pos1,int pos2, HFONT font)
+{
+	for (int i = pos1; i< pos2; i++)
+	{
+		data[i].font = font;
+	}
+	return 1;
 }
