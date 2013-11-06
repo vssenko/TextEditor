@@ -23,6 +23,7 @@ protected:
 	static LRESULT OnPaint(BaseWindow* wnd,LPARAM lparam,WPARAM wparam);
 	static LRESULT OnDestroy(BaseWindow* wnd,LPARAM lparam,WPARAM wparam);
 	static LRESULT OnCharPress(BaseWindow* wnd,LPARAM lparam,WPARAM wparam);
+	static LRESULT OnKeyPress(BaseWindow* wnd,LPARAM lparam,WPARAM wparam);
 	static LRESULT OnMenuCommand(BaseWindow* wnd,LPARAM lparam,WPARAM wparam);
 	static LRESULT OnSizeMove(BaseWindow* wnd,LPARAM lparam,WPARAM wparam); 
 	static LRESULT OnMouseDown(BaseWindow* wnd,LPARAM lparam,WPARAM wparam); 

@@ -12,7 +12,7 @@ public:
 	int AddChar(TCHAR chr, HFONT font, int pos,BOOL toHistory);
 	int AddVectorExtendedChar(std::vector<ExtendedChar> vctr, int pos,BOOL toHistory);
 	int Move(int firstPos,int secondPos, int positionToMove,BOOL toHistory);
-	int SetNewData(std::vector<ExtendedChar> chrvctr);
+	int SetNewData(std::vector<ExtendedChar> chrvctr,BOOL toHistory);
 	int  GetData(std::vector<ExtendedChar>* vectr);
 	int GetSize();
 	int ChangeFont(int pos1,int pos2, HFONT font);

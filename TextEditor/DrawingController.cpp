@@ -44,7 +44,7 @@ int DrawingController::PaintAll()
 	isSelected = false;
 	xcoord = 0;
 	ycoord = 0;
-	int maxLineY = 0;
+	maxLineY = 0;
 	PAINTSTRUCT ps;
 	std::vector<std::pair<ExtendedChar,POINT>> map;
 	father->actioncontrol->CalculateExtendCharCoordinates(&map);
@@ -87,11 +87,8 @@ int DrawingController::PaintAll()
 	}
 	if (!isCaretLocated)
 	{
-		if (map.size() != 0)
-		{
 			caretPosX = xlastCoord;
 			caretPosY = ylastCoord;
-		}
 		PaintCaret();
 	}
 	EndPaint(father->hWindow->_hwnd, &ps);
@@ -107,7 +104,15 @@ int DrawingController::DrawExtendedChar(ExtendedChar chr)
 	else
 	{
 		SetFont(chr);
-		::TextOut(hdc, xcoord, ycoord, (LPCWSTR) &chr.chr, 1 );
+		switch (chr.chr)
+		{
+		case '\t':
+			::TextOut(hdc,xcoord, ycoord,L"    ",4);
+			break;
+		default:
+			::TextOut(hdc, xcoord, ycoord, (LPCWSTR) &chr.chr, 1 );
+			break;
+		}
 		return 1;
 	}
 }

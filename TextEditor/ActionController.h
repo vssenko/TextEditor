@@ -12,11 +12,11 @@ public:
 	BOOL isMoveSelected;
 	BOOL isSelected;
 	HFONT currentFont;
-
 	ActionController(AllWhatYouWantController* contr);
 	~ActionController(void);
 	int CalculatePosition(int x, int y);
 	int CharPress(LPARAM lparam, WPARAM wparam);
+	int KeyPress(LPARAM lparam, WPARAM wparam);
 	int SpecialKeyPressed(WPARAM key);
 	int CalculateExtendCharCoordinates(std::vector<std::pair<ExtendedChar,POINT>>* map);
 	int MoveSelected(int pos);
@@ -24,8 +24,12 @@ public:
 	int ChangeFont();
 	int SetFocus();
 	int SelectWord(int pos);
+	int CopyToClipboad();
+	int PasteFromClipboad();
+	int CutToClipboad();
 private:
 	std::vector<TCHAR> delimiters;
+	BOOL charRecieved;
 	int GetExtendedElementSize(HDC hdc, ExtendedChar chr, SIZE* size);
 	int GetWordSize(HDC hdc, Text* text, int currentpos, SIZE* size);
 	BOOL IsDelimiter(ExtendedChar chr);

@@ -11,7 +11,7 @@ AllWhatYouWantController::AllWhatYouWantController(TextEditorWindow* window)
 	scalingcontrol = new ScalingController(this);
 	fileman = new Filemanager(this);
 	text = new Text(this);
-	historycontrol->AddState();
+	//historycontrol->AddState();
 }
 
 AllWhatYouWantController::~AllWhatYouWantController(void)

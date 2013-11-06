@@ -8,7 +8,6 @@ public:
 	~DrawingController(void);
 	int PaintAll();
 	int PaintCaret();
-	
 private:
 	int DrawBitmap(HBITMAP hBitmap);
 	int DrawExtendedChar(ExtendedChar chr);
@@ -17,6 +16,7 @@ private:
 	int ycoord;
 	int caretPosX;
 	int caretPosY;
+	int maxLineY;
 	BOOL isSelected;
 	HFONT currentFont;
 	HDC hdc;

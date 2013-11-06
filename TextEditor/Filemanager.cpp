@@ -97,7 +97,7 @@ int Filemanager::SaveFile()
 int Filemanager::NewFile()
 {
 	std::vector<ExtendedChar> vctr = std::vector<ExtendedChar>();
-	father->text->SetNewData(vctr);
+	father->text->SetNewData(vctr,TRUE);
 	return 1;
 }
 int Filemanager::LoadFile()
@@ -176,7 +176,7 @@ int Filemanager::LoadFile()
 		}//новый текст готов!
 		std::vector<ExtendedChar> chrvctr;
 		newText.GetData(&chrvctr);
-		father->text->SetNewData(chrvctr);
+		father->text->SetNewData(chrvctr,TRUE);
 		CloseHandle(file);
 		return 1;
 	}

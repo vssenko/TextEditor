@@ -14,6 +14,14 @@
 #define IDI_SMALL				108
 #define IDC_TEXTEDITOR			109
 #define IDC_MYICON				2
+#define KEY_LEFT 37
+#define KEY_RIGHT 39
+#define KEY_ESC 27
+#define KEY_CTRL_Z 26
+#define KEY_CTRL_X 24
+#define KEY_CTRL_C 3
+#define KEY_CTRL_V 22
+#define KEY_CTRL_Y 25
 #ifndef IDC_STATIC
 #define IDC_STATIC				-1
 #endif

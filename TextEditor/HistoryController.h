@@ -13,9 +13,22 @@ public:
 	int RepealOfRepeal(); // ^_^
 	int ClearHistory();
 private:
+	class HistoryElement
+	{
+	public:
+		HistoryElement();
+		~HistoryElement();
+		std::vector<ExtendedChar> charvector;
+		int currentpos;
+		int firstpos;
+		int secondpos;
+		HFONT currentFont;
+	};
+	int CreateHistoryElement(HistoryElement* el);
+	int SetHistoryElement(HistoryElement el);
 	int maxStates;
 	int currentState;
-	std::vector<Text> states;
-	std::vector<Text> oldStates;
+	std::vector<HistoryElement> states;
+	std::vector<HistoryElement> oldStates;
 };
 

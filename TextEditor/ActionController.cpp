@@ -9,6 +9,7 @@ ActionController::ActionController(AllWhatYouWantController* contr)
 	isSelected = false;
 	isStartedSelect = false;
 	isMoveSelected  =false;
+	charRecieved = true;
 	currentFont = (HFONT) GetStockObject(DEFAULT_GUI_FONT);
 	delimiters = std::vector<TCHAR>();
 	delimiters.push_back(' ');
@@ -18,14 +19,43 @@ ActionController::ActionController(AllWhatYouWantController* contr)
 	delimiters.push_back('?');
 	delimiters.push_back('-');
 	delimiters.push_back(':');
+	delimiters.push_back('\t');
 }
 ActionController::~ActionController(void)
 {
 }
 int ActionController::CharPress(LPARAM lparam, WPARAM wparam)
 {
-	father->text->AddChar((TCHAR) wparam,currentFont, currentPositionToWrite,TRUE);
-	currentPositionToWrite++;
+	if (charRecieved)
+	{
+		switch (wparam)
+		{
+		case KEY_CTRL_Z:
+			father->historycontrol->Repeal();
+			break;
+		case KEY_CTRL_X:
+			CutToClipboad();
+			break;
+		case KEY_CTRL_C:
+			CopyToClipboad();
+			break;
+		case KEY_CTRL_V:
+			PasteFromClipboad();
+			break;
+		case KEY_CTRL_Y:
+			father->historycontrol->RepealOfRepeal();
+			break;
+		default:
+			if (!(GetAsyncKeyState(VK_CONTROL) & 0x8000) )//не нажат контрл
+			{
+				father->text->AddChar((TCHAR) wparam,currentFont, currentPositionToWrite,TRUE);
+				currentPositionToWrite++;
+				InvalidateRect(father->hWindow->_hwnd, NULL,TRUE);
+			}
+		}
+	}
+	else
+		charRecieved = true; // следующий будет ожидаться char
 	return 1;
 }
 int ActionController::MoveSelected(int pos)
@@ -206,7 +236,7 @@ int ActionController::CalculateExtendCharCoordinates(std::vector<std::pair<Exten
 			isSingleWord = false;
 		}
 		father->actioncontrol->GetExtendedElementSize(hdc,walker,elementSize);
-		if ((xcoord + elementSize->cx) > wndRect->right - wndRect->left)
+		if (((xcoord + elementSize->cx) > wndRect->right - wndRect->left) || walker.chr == '\r')
 		{
 			if (isOffsetLeft)
 				xcoord = -abc.abcA;
@@ -275,8 +305,28 @@ int ActionController::GetExtendedElementSize(HDC hdc, ExtendedChar chr, SIZE* si
 	sz.cx =abc.abcB + abs(abc.abcC);
 	if (abc.abcA > 0)
 		sz.cx += abc.abcA;
-	size->cx = sz.cx;
-	size->cy = sz.cy;
+	switch (chr.chr)
+	{
+	case '\r':
+	{
+		size->cx = 0;
+		size-> cy = 0;
+		break;
+	}
+	case '\t':
+	{
+		GetTextExtentPoint32(hdc,L"    ",4, &sz);
+		size->cx = sz.cx;
+		size->cy = sz.cy;
+		break;
+	}
+	default:
+	{
+		size->cx = sz.cx;
+		size->cy = sz.cy;
+		break;
+	}
+	}
 	if (ggwp)
 		SelectObject(hdc, prevFont);
 	return 1;
@@ -324,5 +374,42 @@ int ActionController::DeleteSelected()
 	if (firstSelectPosition!= secondSelectPosition)
 		father->text->DeleteSymbol(firstSelectPosition,secondSelectPosition);
 	currentPositionToWrite = min(firstSelectPosition,secondSelectPosition);
+	return 1;
+}
+int ActionController::KeyPress(LPARAM lparam, WPARAM wparam)
+{
+	charRecieved = false;
+	switch (wparam)
+	{
+	case VK_LEFT:
+		currentPositionToWrite = max(currentPositionToWrite - 1, 0);
+		firstSelectPosition = currentPositionToWrite;
+		secondSelectPosition = currentPositionToWrite;
+		break;
+	case VK_RIGHT:
+		currentPositionToWrite = min(currentPositionToWrite +1, father->text->GetSize());
+		firstSelectPosition = currentPositionToWrite;
+		secondSelectPosition = currentPositionToWrite;
+		break;
+	case VK_ESCAPE:
+		break;
+	default:
+		charRecieved = true;
+		break;
+	}
+	if (!charRecieved)
+		InvalidateRect(father->hWindow->_hwnd, NULL,TRUE);
+	return 1;
+}
+int ActionController::CopyToClipboad()
+{
+	return 1;
+}
+int ActionController::PasteFromClipboad()
+{
+	return 1;
+}
+int ActionController::CutToClipboad()
+{
 	return 1;
 }

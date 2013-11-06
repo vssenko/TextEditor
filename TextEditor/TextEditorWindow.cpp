@@ -13,6 +13,7 @@ TextEditorWindow::TextEditorWindow(void)
 	controller = new AllWhatYouWantController(this);
 	AddMessage(WM_PAINT, &TextEditorWindow::OnPaint);
 	AddMessage(WM_CHAR, &TextEditorWindow::OnCharPress);
+	AddMessage(WM_KEYDOWN, &TextEditorWindow::OnKeyPress);////!!!
 	AddMessage(WM_DESTROY, &TextEditorWindow::OnDestroy);
 	AddMessage(WM_COMMAND, &TextEditorWindow::OnMenuCommand);
 	AddMessage(WM_SIZE, &TextEditorWindow::OnSizeMove);
@@ -85,8 +86,12 @@ LRESULT TextEditorWindow::OnPaint(BaseWindow* wnd,LPARAM lparam,WPARAM wparam)
 LRESULT TextEditorWindow::OnCharPress(BaseWindow* wnd,LPARAM lparam,WPARAM wparam)
 {
 	reinterpret_cast<TextEditorWindow*>(wnd)->controller->actioncontrol->CharPress(lparam, wparam);
-	InvalidateRect(wnd -> _hwnd, NULL, TRUE);
-	return 0;
+	return 1;
+}
+LRESULT TextEditorWindow::OnKeyPress(BaseWindow* wnd,LPARAM lparam,WPARAM wparam)
+{
+	reinterpret_cast<TextEditorWindow*>(wnd)->controller->actioncontrol->KeyPress(lparam, wparam);
+	return 1;
 }
 LRESULT TextEditorWindow::OnDestroy(BaseWindow* wnd,LPARAM lparam,WPARAM wparam)
 {
