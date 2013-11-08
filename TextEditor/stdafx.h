@@ -21,6 +21,7 @@
 #include <iostream>
 #include <map>
 #include <Windowsx.h>
+#include <Strsafe.h>
 // TODO: Установите здесь ссылки на дополнительные заголовки, требующиеся для программы
 #include "ExtendedChar.h"
 #include "BaseWindow.h"

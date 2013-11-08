@@ -10,6 +10,7 @@ ActionController::ActionController(AllWhatYouWantController* contr)
 	isStartedSelect = false;
 	isMoveSelected  =false;
 	charRecieved = true;
+	uClipboardFormat = RegisterClipboardFormat(L"VASYA");
 	currentFont = (HFONT) GetStockObject(DEFAULT_GUI_FONT);
 	delimiters = std::vector<TCHAR>();
 	delimiters.push_back(' ');
@@ -34,10 +35,10 @@ int ActionController::CharPress(LPARAM lparam, WPARAM wparam)
 			father->historycontrol->Repeal();
 			break;
 		case KEY_CTRL_X:
-			CutToClipboad();
+			CopyToClipboad(true);
 			break;
 		case KEY_CTRL_C:
-			CopyToClipboad();
+			CopyToClipboad(false);
 			break;
 		case KEY_CTRL_V:
 			PasteFromClipboad();
@@ -45,9 +46,22 @@ int ActionController::CharPress(LPARAM lparam, WPARAM wparam)
 		case KEY_CTRL_Y:
 			father->historycontrol->RepealOfRepeal();
 			break;
+		case VK_BACK:
+			if(firstSelectPosition != secondSelectPosition)
+				DeleteSelected();
+			else
+			{
+				currentPositionToWrite = max(currentPositionToWrite - 1, 0);
+				father->text->DeleteSymbol(currentPositionToWrite, TRUE);
+				firstSelectPosition = currentPositionToWrite;
+				secondSelectPosition = currentPositionToWrite;
+			}
+			InvalidateRect(father->hWindow->_hwnd, NULL,TRUE);
+			break;
 		default:
 			if (!(GetAsyncKeyState(VK_CONTROL) & 0x8000) )//не нажат контрл
 			{
+				DeleteSelected();
 				father->text->AddChar((TCHAR) wparam,currentFont, currentPositionToWrite,TRUE);
 				currentPositionToWrite++;
 				InvalidateRect(father->hWindow->_hwnd, NULL,TRUE);
@@ -215,25 +229,28 @@ int ActionController::CalculateExtendCharCoordinates(std::vector<std::pair<Exten
 			SelectObject(hdc,father->scalingcontrol->ScaledFont(walker.font));
 			font = walker.font;
 		}
-		GetCharABCWidths(hdc, extchrvector[i].chr,extchrvector[i].chr,&abc);
-		isOffsetLeft = (abc.abcA < 0);	
-		if (isOffsetLeft)
-			xcoord -= abc.abcA;
-		if (isSingleWord)
+		if (walker.bmp == NULL)
 		{
-			if(father->actioncontrol->GetWordSize(hdc,father->text,i,elementSize))
+			GetCharABCWidths(hdc, extchrvector[i].chr,extchrvector[i].chr,&abc);
+			isOffsetLeft = (abc.abcA < 0);	
+			if (isOffsetLeft)
+				xcoord -= abc.abcA;
+			if (isSingleWord)
 			{
-				if (xcoord + elementSize->cx > wndRect->right - wndRect->left)
+				if(father->actioncontrol->GetWordSize(hdc,father->text,i,elementSize))
 				{
-					if (isOffsetLeft)
-						xcoord = -abc.abcA;
-					else
-						xcoord = 0;
-					ycoord += maxLineY;
-					maxLineY = 0;
+					if (xcoord + elementSize->cx > wndRect->right - wndRect->left)
+					{
+						if (isOffsetLeft)
+							xcoord = -abc.abcA;
+						else
+							xcoord = 0;
+						ycoord += maxLineY;
+						maxLineY = 0;
+					}
 				}
+				isSingleWord = false;
 			}
-			isSingleWord = false;
 		}
 		father->actioncontrol->GetExtendedElementSize(hdc,walker,elementSize);
 		if (((xcoord + elementSize->cx) > wndRect->right - wndRect->left) || walker.chr == '\r')
@@ -286,8 +303,8 @@ int ActionController::GetExtendedElementSize(HDC hdc, ExtendedChar chr, SIZE* si
 	{
 		BITMAP realbmp;
 		GetObject(chr.bmp, sizeof(BITMAP),(LPVOID) &realbmp); 
-		size->cx = realbmp.bmWidth;
-		size->cy = realbmp.bmHeight;
+		size->cx = realbmp.bmWidth * father->scalingcontrol->scale;
+		size->cy = realbmp.bmHeight * father->scalingcontrol->scale;
 		return 1;
 	}
 	SIZE sz;
@@ -372,8 +389,12 @@ BOOL ActionController::IsDelimiter(ExtendedChar chr)
 int ActionController::DeleteSelected()
 {
 	if (firstSelectPosition!= secondSelectPosition)
-		father->text->DeleteSymbol(firstSelectPosition,secondSelectPosition);
-	currentPositionToWrite = min(firstSelectPosition,secondSelectPosition);
+	{
+		father->text->DeleteSymbol(firstSelectPosition,secondSelectPosition,TRUE);
+		currentPositionToWrite = min(firstSelectPosition,secondSelectPosition);
+		firstSelectPosition = currentPositionToWrite;
+		secondSelectPosition = currentPositionToWrite;
+	}
 	return 1;
 }
 int ActionController::KeyPress(LPARAM lparam, WPARAM wparam)
@@ -401,15 +422,93 @@ int ActionController::KeyPress(LPARAM lparam, WPARAM wparam)
 		InvalidateRect(father->hWindow->_hwnd, NULL,TRUE);
 	return 1;
 }
-int ActionController::CopyToClipboad()
+int ActionController::CopyToClipboad(BOOL deleteSelected)
 {
+	HGLOBAL hglb;
+	int size = abs(firstSelectPosition - secondSelectPosition);
+	TCHAR* text = new TCHAR[size + 1]; //еще \0
+	ExtendedChar *extCharToClipboard = new ExtendedChar[size +1];
+	if(OpenClipboard(father->hWindow->_hwnd)&&
+		(firstSelectPosition != secondSelectPosition))
+    {
+		std::vector<ExtendedChar> extchrvctr ;
+		father->text->GetData(&extchrvctr);
+		EmptyClipboard();
+		int j = 0;int k = 0;
+		for (int i = min(firstSelectPosition, secondSelectPosition);
+			i< max(firstSelectPosition, secondSelectPosition); i++)
+		{
+			if (extchrvctr[i].bmp == NULL)
+			{
+				text[j] = extchrvctr[i].chr;
+				j++;
+			}
+			extCharToClipboard[k] = extchrvctr[i];
+			k++;
+		}
+		
+		text[j] = '\0';
+		ExtendedChar lastChar;
+		lastChar.chr = '\0';
+		extCharToClipboard[k] = lastChar;
+		hglb = GlobalAlloc(GMEM_FIXED, MAX_PATH);
+		TCHAR* clip_data = (TCHAR*)GlobalLock(hglb);
+		lstrcpy(clip_data,text);
+		GlobalUnlock(hglb);
+		SetClipboardData(CF_UNICODETEXT, (HANDLE)(clip_data));
+		hglb = GlobalAlloc(GMEM_MOVEABLE, sizeof(ExtendedChar) * k + 1);
+		ExtendedChar* vasya = (ExtendedChar*) GlobalLock(hglb);
+		memcpy(vasya,extCharToClipboard, sizeof(ExtendedChar) * k);
+		GlobalUnlock(hglb);
+		SetClipboardData(uClipboardFormat, (HANDLE) (extCharToClipboard));
+        CloseClipboard();
+		if (deleteSelected)
+		{
+			DeleteSelected();
+			InvalidateRect(father->hWindow->_hwnd,NULL,TRUE);
+		}
+    }
 	return 1;
 }
 int ActionController::PasteFromClipboad()
 {
-	return 1;
-}
-int ActionController::CutToClipboad()
-{
+	if(OpenClipboard(father->hWindow->_hwnd))
+	{
+		std::vector<ExtendedChar> vctr = std::vector<ExtendedChar>();
+		ExtendedChar* arraychr;
+		if (IsClipboardFormatAvailable(uClipboardFormat))
+		{
+			 arraychr =(ExtendedChar*) GetClipboardData(uClipboardFormat);
+			 for (int i = 0; i < MAXINT; i++)
+			 {
+				 if (arraychr[i].chr == '\0')
+					 break;
+				 vctr.push_back(arraychr[i]);
+			 }
+		}
+		else
+			if (IsClipboardFormatAvailable(CF_UNICODETEXT))
+			{
+				TCHAR* text = (TCHAR*) GetClipboardData(CF_UNICODETEXT);
+				int i = 0;
+				while(1)
+				{
+					if(text[i] == '\0')
+						break;
+					ExtendedChar chr= ExtendedChar();
+					chr.chr = text[i];
+					chr.font = currentFont;
+					vctr.push_back(chr);
+					i++;
+				}
+			}
+			DeleteSelected();
+			father->text->AddVectorExtendedChar(vctr,currentPositionToWrite,TRUE);
+			currentPositionToWrite += vctr.size();
+			firstSelectPosition = currentPositionToWrite;
+			secondSelectPosition =currentPositionToWrite;
+			CloseClipboard();
+			InvalidateRect(father->hWindow->_hwnd,NULL,TRUE);
+	}
 	return 1;
 }

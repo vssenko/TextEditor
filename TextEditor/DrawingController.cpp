@@ -26,19 +26,20 @@ int DrawingController::DrawBitmap(HBITMAP hBitmap)
 	 DPtoLP(hdcMem, &ptOrg, 1); 
 	 DWORD params;
 	 if (isSelected)
-		 params = DSTINVERT;
+		 params = NOTSRCCOPY;
 	 else
 		 params = SRCCOPY;
-	 BitBlt(
-		 hdc, xcoord, ycoord, ptSize.x * father->scalingcontrol->scale, ptSize.y * father->scalingcontrol->scale, 
-	hdcMem, ptOrg.x, ptOrg.y, params 
-	); 
-	//StretchBlt(hdc,xcoord,ycoord, ptSize.x * scaleRatio, ptSize.y * scaleRatio, hdcMem, 0, 0, image->GetWidth(), image->GetHeight(), SRCCOPY);
+	 //BitBlt(
+	//	 hdc, xcoord, ycoord, ptSize.x * father->scalingcontrol->scale, ptSize.y * father->scalingcontrol->scale, 
+	//hdcMem, ptOrg.x, ptOrg.y, params ); 
+	StretchBlt(hdc,xcoord,ycoord, ptSize.x * father->scalingcontrol->scale, ptSize.y * father->scalingcontrol->scale,
+		hdcMem, 0, 0, ptSize.x, ptSize.y, params);
 	 DeleteDC(hdcMem); 
 	 return 1337;
 }
 int DrawingController::PaintAll()
 {
+
 	currentFont = 0;
 	BOOL isCaretLocated = false, isSingleWord = false;
 	isSelected = false;

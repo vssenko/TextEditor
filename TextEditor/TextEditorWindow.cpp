@@ -139,8 +139,11 @@ LRESULT TextEditorWindow::OnSizeMove(BaseWindow* wnd,LPARAM lparam,WPARAM wparam
 LRESULT TextEditorWindow::OnMouseDown(BaseWindow* wnd,LPARAM lparam,WPARAM wparam)
 {
 	int positionpressed = reinterpret_cast<TextEditorWindow*>(wnd)->controller->actioncontrol->CalculatePosition(GET_X_LPARAM(lparam), GET_Y_LPARAM(lparam));
-	if (positionpressed >= reinterpret_cast<TextEditorWindow*>(wnd)->controller->actioncontrol->firstSelectPosition &&
-		positionpressed < reinterpret_cast<TextEditorWindow*>(wnd)->controller->actioncontrol->secondSelectPosition)
+	if (positionpressed >= min(reinterpret_cast<TextEditorWindow*>(wnd)->controller->actioncontrol->firstSelectPosition,
+		 reinterpret_cast<TextEditorWindow*>(wnd)->controller->actioncontrol->secondSelectPosition)
+		&&
+		positionpressed < max(reinterpret_cast<TextEditorWindow*>(wnd)->controller->actioncontrol->firstSelectPosition,
+		 reinterpret_cast<TextEditorWindow*>(wnd)->controller->actioncontrol->secondSelectPosition))
 	{
 		reinterpret_cast<TextEditorWindow*>(wnd)->controller->actioncontrol->isMoveSelected = true;
 	}

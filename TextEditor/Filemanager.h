@@ -12,12 +12,18 @@ public:
 	  int LoadFile();
 	  int NewFile();
 private:
+	PBITMAPINFO CreateBitmapInfoStruct(HWND hwnd, HBITMAP hBmp);
+	class ImageJunk
+	{
+
+	};
 	class FileObject
 	{
 	public:
 		FileObject();
 		std::vector<std::pair<HFONT,LOGFONT>> fonts;
-		std::vector<std::pair<HBITMAP,BITMAP>> bitmaps;
+		std::vector<std::pair<HBITMAP,BITMAPINFOHEADER>> bitmaps;
 		std::vector<ExtendedChar> faketext;
 	};
+
 };

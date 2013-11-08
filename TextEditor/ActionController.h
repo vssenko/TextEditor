@@ -24,12 +24,12 @@ public:
 	int ChangeFont();
 	int SetFocus();
 	int SelectWord(int pos);
-	int CopyToClipboad();
+	int CopyToClipboad(BOOL deleteSelected);
 	int PasteFromClipboad();
-	int CutToClipboad();
 private:
 	std::vector<TCHAR> delimiters;
 	BOOL charRecieved;
+	UINT uClipboardFormat;
 	int GetExtendedElementSize(HDC hdc, ExtendedChar chr, SIZE* size);
 	int GetWordSize(HDC hdc, Text* text, int currentpos, SIZE* size);
 	BOOL IsDelimiter(ExtendedChar chr);

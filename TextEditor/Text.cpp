@@ -31,10 +31,13 @@ int Text::AddBitmap(HBITMAP bitmap, int pos,BOOL toHistory)
 }
 int Text::DeleteSymbol(int pos,BOOL toHistory)
 {
-	if (toHistory)
-		father->historycontrol->AddState();
-	data.erase(data.begin() + pos);
-	
+	int size = data.size();
+	if (data.size() > pos)
+	{
+		if (toHistory)
+			father->historycontrol->AddState();
+		data.erase(data.begin() + pos);
+	}
 	return 1;
 }
 int Text::DeleteSymbol(int pos1,int pos2,BOOL toHistory)
@@ -69,7 +72,7 @@ int Text::Move(int firstPos,int secondPos, int positionToMove,BOOL toHistory)
 	if ((positionToMove >= min(firstPos,secondPos)) && (positionToMove <= max(firstPos,secondPos)))
 		return 1;
 	std::vector<ExtendedChar> tmpvect;
-	for (int i = firstPos; i < secondPos; i++)
+	for (int i = min(firstPos,secondPos); i < max(secondPos,firstPos); i++)
 	{
 		tmpvect.push_back(data[i]);
 	}
