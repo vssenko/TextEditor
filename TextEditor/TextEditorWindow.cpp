@@ -123,7 +123,7 @@ LRESULT TextEditorWindow::OnMenuCommand(BaseWindow* wnd,LPARAM lparam,WPARAM wpa
 			break;
 
 		case ID_ABOUT:
-			MessageBox(wnd -> _hwnd, L"Vitalik pizdostradalec",L"About", NULL);
+			MessageBox(wnd -> _hwnd, L"Magic people vodoo people!",L"About", NULL);
 			break;
 		case ID_IMAGE:
 			reinterpret_cast<TextEditorWindow*>(wnd)->controller->fileman->LoadMyImage();
@@ -160,6 +160,8 @@ LRESULT TextEditorWindow::OnMouseMove(BaseWindow* wnd,LPARAM lparam,WPARAM wpara
 	{
 		int positionpressed = reinterpret_cast<TextEditorWindow*>(wnd)->controller->actioncontrol->CalculatePosition(GET_X_LPARAM(lparam), GET_Y_LPARAM(lparam));
 		reinterpret_cast<TextEditorWindow*>(wnd)->controller->actioncontrol->Select( -1 , positionpressed);
+		if (!(GetAsyncKeyState(VK_LBUTTON) & 0x8000 ))
+			reinterpret_cast<TextEditorWindow*>(wnd)->controller->actioncontrol->isStartedSelect = false;
 	}
 	else
 		if (reinterpret_cast<TextEditorWindow*>(wnd)->controller->actioncontrol->isMoveSelected)

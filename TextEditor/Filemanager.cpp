@@ -88,8 +88,13 @@ int Filemanager::SaveFile()
 			WriteFile(file,&saveFileObject.faketext[i], sizeof(ExtendedChar),&written,NULL);
 		for (int i = 0; i< countOfFonts; i++)//записываем шрифты
 			WriteFile(file,&saveFileObject.fonts[i], sizeof(std::pair<HFONT,LOGFONT>),&written,NULL);
+		// А ВОТ ТУТ ХЕРНЯ УЖЕ ИСПРАВИТЬ НАДО
 		for (int i = 0; i< countOfBitmaps; i++)//записываем битмапы
-			WriteFile(file,&saveFileObject.bitmaps[i], sizeof(std::pair<HBITMAP,BITMAP>),&written,NULL);
+		{
+			//WriteFile(file,&saveFileObject.bitmaps[i], sizeof(std::pair<HBITMAP,BITMAP>),&written,NULL);
+			PBITMAPINFO vasya = CreateBitmapInfoStruct(father->hWindow->_hwnd,saveFileObject.bitmaps[i].first);
+			CreateBMPFile(file,vasya,saveFileObject.bitmaps[i].first);
+		}
 		CloseHandle(file);
 		return 1;
     }
@@ -140,11 +145,10 @@ int Filemanager::LoadFile()
 			ReadFile(file,&fontbuffer,sizeof(std::pair<HFONT,LOGFONT>),&readBytes,NULL);
 			openfileObject.fonts.push_back(fontbuffer);
 		}
-		std::pair<HBITMAP,BITMAP> bmpbuffer;
+		std::vector<HBITMAP> loadedBitmaps;
 		for(int i = 0; i < countOfBitmaps; i++)
 		{
-			ReadFile(file,&bmpbuffer,sizeof(std::pair<HBITMAP,BITMAP>),&readBytes,NULL);
-			openfileObject.bitmaps.push_back(bmpbuffer);
+			loadedBitmaps.push_back(LoadNextImageFromMyFile(file));
 		}
 		//все, объект готов. Осталось превратить его в Text.
 		Text newText = Text(NULL);
@@ -154,20 +158,18 @@ int Filemanager::LoadFile()
 			HFONT newHFont = CreateFontIndirect(&openfileObject.fonts[i].second);
 		    oldToNewFontsMap[openfileObject.fonts[i].first] = newHFont;
 		}
-		std::map<HBITMAP,HBITMAP> oldToNewBitmapMap = std::map<HBITMAP,HBITMAP>();
 		for (int i = 0; i < openfileObject.bitmaps.size(); i++)
 		{ 
-			HBITMAP newHBitmap = CreateBitmapIndirect(&openfileObject.bitmaps[i].second);
-		    
-			oldToNewBitmapMap[openfileObject.bitmaps[i].first] = newHBitmap;
 		}
 		ExtendedChar walker;
+		int k = 0;
 		for (int i = 0; i< openfileObject.faketext.size(); i++)
 		{
 			walker = openfileObject.faketext[i];
 			if (walker.bmp != NULL)
 			{
-				newText.AddBitmap(oldToNewBitmapMap[walker.bmp],i, FALSE);
+				newText.AddBitmap(loadedBitmaps[k],i,FALSE);
+				k++;
 			}
 			else
 			{
@@ -245,4 +247,73 @@ PBITMAPINFO Filemanager::CreateBitmapInfoStruct(HWND hwnd, HBITMAP hBmp)
      pbmi->bmiHeader.biClrImportant = 0; 
      return pbmi; 
  } 
+void Filemanager::CreateBMPFile(HANDLE hf,PBITMAPINFO pbi, 
+                  HBITMAP hBMP)
+{ 
+	// file handle  
+    BITMAPFILEHEADER hdr;       // bitmap file-header  
+    PBITMAPINFOHEADER pbih;     // bitmap info-header  
+    LPBYTE lpBits;              // memory pointer  
+    DWORD dwTotal;              // total count of bytes  
+    DWORD cb;                   // incremental count of bytes  
+    BYTE *hp;                   // byte pointer  
+    DWORD dwTmp; 
+	HDC hDC = GetDC(father->hWindow->_hwnd);
+    pbih = (PBITMAPINFOHEADER) pbi; 
+    lpBits = (LPBYTE) GlobalAlloc(GMEM_FIXED, pbih->biSizeImage);
 
+    if (!lpBits) 
+         return ;
+
+    // Retrieve the color table (RGBQUAD array) and the bits  
+    // (array of palette indices) from the DIB.  
+    if (!GetDIBits(hDC, hBMP, 0, (WORD) pbih->biHeight, lpBits, pbi, 
+        DIB_RGB_COLORS)) 
+    return ;
+
+    if (hf == INVALID_HANDLE_VALUE) 
+       return ;
+    hdr.bfType = 0x4d42;        // 0x42 = "B" 0x4d = "M"  
+    // Compute the size of the entire file.  
+    hdr.bfSize = (DWORD) (sizeof(BITMAPFILEHEADER) + 
+                 pbih->biSize + 
+				 pbih->biClrUsed  * sizeof(RGBQUAD) + pbih->biSizeImage); 
+    hdr.bfReserved1 = pbih->biClrUsed; 
+    hdr.bfReserved2 = 0; 
+    // Compute the offset to the array of color indices.  
+    hdr.bfOffBits = (DWORD) sizeof(BITMAPFILEHEADER) + 
+                    pbih->biSize + pbih->biClrUsed 
+                    * sizeof (RGBQUAD); 
+    // Copy the BITMAPFILEHEADER into the .BMP file.  
+    if (!WriteFile(hf, (LPVOID) &hdr, sizeof(BITMAPFILEHEADER), 
+        (LPDWORD) &dwTmp,  NULL)) 
+    return ;
+    // Copy the BITMAPINFOHEADER and RGBQUAD array into the file.  
+    if (!WriteFile(hf, (LPVOID) pbih, sizeof(BITMAPINFOHEADER) 
+                  + pbih->biClrUsed * sizeof (RGBQUAD), 
+                  (LPDWORD) &dwTmp, ( NULL)))
+        return ;
+    // Copy the array of color indices into the .BMP file.  
+    dwTotal = cb = pbih->biSizeImage; 
+    hp = lpBits; 
+    if (!WriteFile(hf, (LPSTR) hp, (int) cb, (LPDWORD) &dwTmp,NULL)) 
+           return ;
+    // Free memory.  
+    GlobalFree((HGLOBAL)lpBits);
+}
+HBITMAP Filemanager::LoadNextImageFromMyFile(HANDLE file)
+{
+	HDC hdc = GetDC(father->hWindow->_hwnd);
+	DWORD dwTmp; 
+	BITMAPFILEHEADER hdr;
+	ReadFile(file,&hdr,sizeof(BITMAPFILEHEADER),&dwTmp,NULL);
+	BITMAPINFO pbi; 
+	ReadFile(file, &pbi,sizeof(BITMAPINFOHEADER) 
+		+ hdr.bfReserved1 * sizeof (RGBQUAD),&dwTmp,NULL);
+	LPBYTE lpBits = (LPBYTE) GlobalAlloc(GMEM_FIXED, pbi.bmiHeader.biSizeImage);
+	BYTE* hp = lpBits;
+	ReadFile(file,hp,pbi.bmiHeader.biSizeImage, &dwTmp, NULL);
+	//return CreateBitmap(pbih.biWidth,pbih.biHeight,pbih.biPlanes,pbih.biBitCount, hp);;
+	return CreateDIBitmap(hdc,&pbi.bmiHeader,CBM_INIT,hp,&pbi,DIB_RGB_COLORS);
+	return NULL;
+}
