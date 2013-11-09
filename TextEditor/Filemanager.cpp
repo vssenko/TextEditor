@@ -67,7 +67,7 @@ int Filemanager::SaveFile()
 			for (int j = 0; j < saveFileObject.bitmaps.size(); j++)
 				if( walker.bmp == saveFileObject.bitmaps[j].first)
 					isExistObject = true;
-			if ((walker.bmp!= NULL)&&(!isExistObject))
+			if ((walker.bmp!= NULL))
 			{
 				BITMAP bmp = BITMAP();
 			    
